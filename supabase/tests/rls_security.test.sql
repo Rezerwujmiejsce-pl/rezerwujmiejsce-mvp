@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(31);
+select plan(53);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
@@ -43,7 +43,7 @@ select is(
   'metadata z rolą admin przy rejestracji nie robi administratora'
 );
 
-select public.bootstrap_admin('admin.one@example.test');
+select private.bootstrap_admin('admin.one@example.test');
 
 select is(
   (select rola::text from public.profile where email = 'admin.one@example.test'),
@@ -78,10 +78,32 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ select public.bootstrap_admin('owner.one@example.test') $$,
+  $$ select private.bootstrap_admin('owner.one@example.test') $$,
   '42501',
-  null,
+  'permission denied for function bootstrap_admin',
   'konto na stronie nie woła bootstrap_admin'
+);
+
+select is(
+  (select to_regprocedure('public.bootstrap_admin(text)') is null),
+  true,
+  'bootstrap_admin nie istnieje w schemacie public'
+);
+
+select is(
+  (select count(*) from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.prosecdef),
+  0::bigint,
+  'w public nie ma funkcji security definer'
+);
+
+select is(
+  (select prosecdef from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'private' and p.proname = 'zatwierdz_lokal'),
+  true,
+  'zatwierdz_lokal jest security definer tylko w private'
 );
 
 select lives_ok(
@@ -320,6 +342,230 @@ select throws_ok(
   null,
   'obcy nie dopisuje się do cudzego lokalu'
 );
+
+-- Zdjęcie: opublikowany obiekt nie da się nadpisać ani skasować.
+-- Nowa wersja to nowy plik. Stara ścieżka zostaje w migawce do kolejnej akceptacji.
+
+reset role;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('app.allow_status_change', '', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into public.zdjecia (id, lokal_id, sciezka, mime, rozmiar_bajty, glowne)
+    select
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      l.id,
+      l.id::text || '/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg',
+      'image/jpeg',
+      128,
+      true
+    from public.lokale l
+    where l.wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'właściciel dodaje zdjęcie szkicu'
+);
+
+select lives_ok(
+  $$
+    insert into storage.objects (bucket_id, name, metadata)
+    select 'zdjecia-lokali', z.sciezka, '{"mimetype":"image/jpeg","mark":"draft"}'::jsonb
+    from public.zdjecia z
+    where z.id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  $$,
+  'właściciel wgrywa plik szkicu'
+);
+
+with upd as (
+  update storage.objects
+     set metadata = '{"mimetype":"image/jpeg","mark":"draft-edited"}'::jsonb
+   where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'
+   returning 1
+)
+select is((select count(*) from upd), 1::bigint, 'nieopublikowany plik można jeszcze poprawić');
+
+select lives_ok(
+  $$
+    select public.wyslij_do_weryfikacji(id)
+    from public.lokale
+    where wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'właściciel wysyła lokal ze zdjęciem'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    select public.zatwierdz_lokal(id)
+    from public.lokale
+    where wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'administrator publikuje lokal ze zdjęciem'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+
+with upd as (
+  update storage.objects
+     set metadata = '{"mimetype":"image/jpeg","mark":"tampered"}'::jsonb
+   where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'
+   returning 1
+)
+select is((select count(*) from upd), 0::bigint, 'właściciel nie nadpisuje opublikowanego pliku');
+
+with del as (
+  delete from storage.objects
+   where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'
+   returning 1
+)
+select is((select count(*) from del), 0::bigint, 'właściciel nie kasuje opublikowanego pliku');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'anon', true);
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+
+select is(
+  (select count(*) from storage.objects where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'),
+  1::bigint,
+  'gość nadal czyta opublikowany plik po próbie kasowania'
+);
+
+select is(
+  (select sciezka from public.opublikowane_zdjecia where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+  (select name from storage.objects where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'),
+  'migawka wskazuje ten sam, nienaruszony plik'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('app.allow_status_change', '', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into public.zdjecia (id, lokal_id, sciezka, mime, rozmiar_bajty, kolejnosc, glowne)
+    select
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      l.id,
+      l.id::text || '/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg',
+      'image/jpeg',
+      256,
+      1,
+      false
+    from public.lokale l
+    where l.wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'właściciel dodaje drugie zdjęcie jako nowy plik'
+);
+
+select lives_ok(
+  $$
+    insert into storage.objects (bucket_id, name, metadata)
+    select 'zdjecia-lokali', z.sciezka, '{"mimetype":"image/jpeg","mark":"next"}'::jsonb
+    from public.zdjecia z
+    where z.id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+  $$,
+  'nowy plik nie koliduje z opublikowanym'
+);
+
+select lives_ok(
+  $$
+    delete from public.zdjecia where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  $$,
+  'właściciel usuwa zdjęcie ze szkicu, nie z magazynu'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'anon', true);
+set local role anon;
+
+select is(
+  (select count(*) from public.opublikowane_zdjecia where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+  1::bigint,
+  'po usunięciu ze szkicu migawka nadal ma stare zdjęcie'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('app.allow_status_change', '', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    select public.wyslij_do_weryfikacji(id)
+    from public.lokale
+    where wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'właściciel wysyła nową wersję zdjęć'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    select public.zatwierdz_lokal(id)
+    from public.lokale
+    where wlasciciel_id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'administrator publikuje nową wersję zdjęć'
+);
+
+reset role;
+set local role anon;
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'anon', true);
+
+select is(
+  (select count(*) from public.opublikowane_zdjecia where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+  0::bigint,
+  'po akceptacji stara ścieżka wypada z migawki'
+);
+
+select is(
+  (select count(*) from public.opublikowane_zdjecia where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),
+  1::bigint,
+  'po akceptacji migawka wskazuje nowy plik'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+set local role authenticated;
+
+with del as (
+  delete from storage.objects
+   where name like '%/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'
+   returning 1
+)
+select is((select count(*) from del), 1::bigint, 'po wypadnięciu z migawki stary plik można skasować');
+
+with del as (
+  delete from storage.objects
+   where name like '%/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg'
+   returning 1
+)
+select is((select count(*) from del), 0::bigint, 'świeżo opublikowanego pliku nie da się skasować');
 
 select * from finish();
 rollback;

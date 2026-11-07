@@ -26,6 +26,7 @@ Rola administratora nie powstaje przy pierwszej rejestracji. Nadaje ją osobna k
 | [docs/uruchomienie.md](docs/uruchomienie.md) | Jak włączyć bazę i stronę na komputerze |
 | [docs/testy.md](docs/testy.md) | Jak powtórzyć testy i co sprawdziły |
 | [docs/administrator.md](docs/administrator.md) | Jak nadać rolę administratora |
+| [docs/bezpieczenstwo.md](docs/bezpieczenstwo.md) | Kto co widzi, zdjęcia po publikacji, cache |
 | [docs/migracje.md](docs/migracje.md) | Który plik SQL wgrać na pusty projekt DEV |
 | [docs/vercel.md](docs/vercel.md) | Czego trzeba, zanim kiedyś wrzucimy to na Vercel. Jeszcze nie wrzucamy |
 | [docs/decyzje.md](docs/decyzje.md) | Tymczasowe ustalenia i pytania bez odpowiedzi |

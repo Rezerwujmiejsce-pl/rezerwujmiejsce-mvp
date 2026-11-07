@@ -249,8 +249,18 @@ export async function deletePhoto(formData: FormData) {
   const supabase = await db();
   const { error } = await supabase.from("zdjecia").delete().eq("id", text(formData, "id"));
   if (error) back(venueId, fromSupabaseError(error).detail);
-  if (path) await supabase.storage.from("zdjecia-lokali").remove([path]);
-  ok(venueId, "Zdjęcie usunięte z kopii roboczej. Opublikowana wersja zmieni się po kolejnej akceptacji.");
+  const live = path
+    ? await supabase.from("opublikowane_zdjecia").select("id").eq("sciezka", path).maybeSingle()
+    : { data: null };
+  if (path && !live.data) {
+    await supabase.storage.from("zdjecia-lokali").remove([path]);
+  }
+  ok(
+    venueId,
+    live.data
+      ? "Zdjęcie zniknęło ze szkicu. Opublikowany plik zostaje do kolejnej akceptacji — nie da się go nadpisać ani skasować wcześniej."
+      : "Zdjęcie usunięte ze szkicu.",
+  );
 }
 
 export async function submitVenue(formData: FormData) {

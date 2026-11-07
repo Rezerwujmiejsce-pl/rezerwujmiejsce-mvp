@@ -21,7 +21,9 @@ To `supabase test db`. Plik: `supabase/tests/rls_security.test.sql`.
 Scenariusze:
 
 - rejestracja z metadata „admin” zostawia rolę klienta,
-- `bootstrap_admin` działa jako operator i odmawia zalogowanemu użytkownikowi,
+- `private.bootstrap_admin` działa jako operator; w `public` tej funkcji nie ma, a zalogowany dostaje odmowę uprawnień,
+- w `public` nie ma funkcji `security definer`,
+- opublikowanego pliku zdjęcia nie da się nadpisać ani skasować; nowa wersja to nowy plik, a stara migawka zostaje do kolejnej akceptacji,
 - właściciel tworzy szkic, nie ustawia statusu „opublikowany” i nie woła akceptacji,
 - drugi właściciel nie widzi i nie zmienia cudzego szkicu,
 - gość nie czyta kopii roboczej, kontaktu wewnętrznego ani zdjęć roboczych,
@@ -36,7 +38,7 @@ W tym środowisku `supabase start` nie dochodzi do końca: kontenery widzą sieb
 
 `psql -h 127.0.0.1 -p 54322 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/rls_security.test.sql`
 
-Wynik: 31 testów, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
+Wynik po tej poprawce: 53 testy, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
 
 Nie uznaję za zaliczony testu, którego tu nie dało się uruchomić: pełnego stosu Supabase (Auth + Storage + PostgREST) przez `supabase start`. Publiczny odczyt i odmowa szkicu zostały sprawdzone dodatkowo przez PostgREST podłączony do tej samej bazy z sieci hosta: gość dostaje `permission denied` na tabeli `lokale`, a `szukaj_lokali` zwraca tylko opublikowany przykład.
 

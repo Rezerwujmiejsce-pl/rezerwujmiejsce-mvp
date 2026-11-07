@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
   formatZloty,
   groszeToInput,
@@ -46,6 +47,17 @@ test("status opublikowany nie udaje, że zmiany już weszły", () => {
   assert.match(statusLabel("published", "none", true), /niewysłane/);
   assert.match(statusLabel("published", "pending_review", false), /czekają/);
   assert.equal(statusLabel("draft", "none", false), "Szkic");
+});
+
+test("cache zdjęć nie jest publiczny ani po publikacji, ani dla szkicu", () => {
+  for (const published of [false, true]) {
+    const headers = mediaCacheHeaders(published);
+    assert.match(headers["Cache-Control"], /private/);
+    assert.match(headers["Cache-Control"], /no-store/);
+    assert.doesNotMatch(headers["Cache-Control"], /public/);
+    assert.equal(headers.Vary, "Cookie");
+    assert.equal(headers["CDN-Cache-Control"], "no-store");
+  }
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

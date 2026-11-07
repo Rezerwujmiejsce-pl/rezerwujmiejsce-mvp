@@ -33,7 +33,7 @@ select
   now(), now()
 where not exists (select 1 from auth.users where lower(email) = 'przyklad.admin@example.test');
 
-select public.bootstrap_admin('przyklad.admin@example.test');
+select private.bootstrap_admin('przyklad.admin@example.test');
 
 do $$
 begin

@@ -9,19 +9,19 @@ Administratora nadaje operator bazy, po tym jak ta osoba już ma konto (zarejest
 W lokalnym Studio albo, później, w SQL Editorze projektu DEV (jako rola postgres):
 
 ```sql
-select public.bootstrap_admin('twoj-adres@poczta.pl');
+select private.bootstrap_admin('twoj-adres@poczta.pl');
 ```
 
-Funkcja odmawia, gdy woła ją zalogowany użytkownik strony. Działa dla operatora bazy (`postgres` / `supabase_admin`) i dla klucza service role.
+Tej funkcji nie ma w publicznym API strony. Edytor SQL działa jako operator bazy (`postgres` albo `supabase_admin`) i dlatego może ją wywołać. Zalogowany użytkownik strony — także z kluczem service role w przeglądarce — nie ma do niej endpointu.
 
 Po nadaniu roli wyloguj się i zaloguj ponownie.
 
-## Sposób 2 — skrypt
+## Sposób 2 — skrypt na bazie, nie przez API
 
-W `.env.local` musi być `SUPABASE_SERVICE_ROLE_KEY` oraz adres API. Potem:
+Potrzebny jest adres połączenia z bazy (`DB_URL` z `supabase status -o env`), nie klucz service role:
 
 ```bash
-npm run admin:bootstrap -- twoj-adres@poczta.pl
+SUPABASE_DB_URL='postgresql://...' npm run admin:bootstrap -- twoj-adres@poczta.pl
 ```
 
 Jeśli adres nie jest lokalny, skrypt staje i prosi o `ALLOW_REMOTE_BOOTSTRAP=yes`. Dzięki temu przypadkiem nie nadamy roli na zdalnym projekcie.

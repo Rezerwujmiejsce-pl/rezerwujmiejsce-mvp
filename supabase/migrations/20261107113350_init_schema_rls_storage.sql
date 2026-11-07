@@ -946,6 +946,9 @@ begin
     and s.pojemnosc_max is not null
     and char_length(trim(s.nazwa)) >= 1;
 
+  -- Ścieżka jest kopiowana jako tekst. Plik pod tą ścieżką nie może być później
+  -- nadpisany ani skasowany: polityki storage odmawiają UPDATE/DELETE, dopóki
+  -- wiersz jest w opublikowane_zdjecia. Nowa wersja zdjęcia to nowy obiekt.
   insert into public.opublikowane_zdjecia (
     id, lokal_id, sala_id, sciezka, glowne, kolejnosc, podpis, autor_licencja
   )
@@ -965,7 +968,7 @@ begin
 end;
 $$;
 
-create or replace function public.zostan_wlascicielem()
+create or replace function private.zostan_wlascicielem()
 returns void
 language plpgsql
 security definer
@@ -992,7 +995,7 @@ begin
 end;
 $$;
 
-create or replace function public.utworz_lokal(p_nazwa text default '', p_miasto text default 'Zielona Góra')
+create or replace function private.utworz_lokal(p_nazwa text default '', p_miasto text default 'Zielona Góra')
 returns uuid
 language plpgsql
 security definer
@@ -1009,7 +1012,7 @@ begin
   if auth.uid() is null then
     raise exception 'Zaloguj się, żeby dodać lokal.';
   end if;
-  perform public.zostan_wlascicielem();
+  perform private.zostan_wlascicielem();
   v_miasto := coalesce(nullif(trim(p_miasto), ''), 'Zielona Góra');
   v_norm := private.zloz_miasto(v_miasto);
   v_base := private.slugify(coalesce(p_nazwa, ''));
@@ -1038,7 +1041,7 @@ begin
 end;
 $$;
 
-create or replace function public.wyslij_do_weryfikacji(p_lokal uuid)
+create or replace function private.wyslij_do_weryfikacji(p_lokal uuid)
 returns void
 language plpgsql
 security definer
@@ -1101,7 +1104,7 @@ begin
 end;
 $$;
 
-create or replace function public.cofnij_zgloszenie(p_lokal uuid)
+create or replace function private.cofnij_zgloszenie(p_lokal uuid)
 returns void
 language plpgsql
 security definer
@@ -1132,7 +1135,7 @@ begin
 end;
 $$;
 
-create or replace function public.zatwierdz_lokal(p_lokal uuid)
+create or replace function private.zatwierdz_lokal(p_lokal uuid)
 returns void
 language plpgsql
 security definer
@@ -1169,7 +1172,7 @@ begin
 end;
 $$;
 
-create or replace function public.odrzuc_lokal(p_lokal uuid, p_powod text)
+create or replace function private.odrzuc_lokal(p_lokal uuid, p_powod text)
 returns void
 language plpgsql
 security definer
@@ -1213,7 +1216,7 @@ begin
 end;
 $$;
 
-create or replace function public.archiwizuj_lokal(p_lokal uuid)
+create or replace function private.archiwizuj_lokal(p_lokal uuid)
 returns void
 language plpgsql
 security definer
@@ -1238,7 +1241,7 @@ begin
 end;
 $$;
 
-create or replace function public.dodaj_czlonka(
+create or replace function private.dodaj_czlonka(
   p_lokal uuid,
   p_email text,
   p_rola public.rola_czlonka
@@ -1275,7 +1278,7 @@ begin
 end;
 $$;
 
-create or replace function public.usun_czlonka(p_lokal uuid, p_profil uuid)
+create or replace function private.usun_czlonka(p_lokal uuid, p_profil uuid)
 returns void
 language plpgsql
 security definer
@@ -1307,7 +1310,7 @@ begin
 end;
 $$;
 
-create or replace function public.lista_czlonkow(p_lokal uuid)
+create or replace function private.lista_czlonkow(p_lokal uuid)
 returns table (profil_id uuid, email text, imie_nazwisko text, rola public.rola_czlonka)
 language sql
 stable
@@ -1321,7 +1324,7 @@ as $$
     and (private.jest_czlonkiem(p_lokal) or private.jest_admin());
 $$;
 
-create or replace function public.bootstrap_admin(p_email text)
+create or replace function private.bootstrap_admin(p_email text)
 returns uuid
 language plpgsql
 security definer
@@ -1352,6 +1355,123 @@ begin
    where id = v_id;
   return v_id;
 end;
+$$;
+
+-- Wejścia API. security invoker: nie podnoszą uprawnień. Ciało jest w private
+-- i nie jest wystawione w API (config.toml: schemas = public, graphql_public).
+-- bootstrap_admin nie ma odpowiednika w public — tylko operator bazy.
+
+create or replace function public.zostan_wlascicielem()
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.zostan_wlascicielem();
+end;
+$$;
+
+create or replace function public.utworz_lokal(p_nazwa text default '', p_miasto text default 'Zielona Góra')
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  return private.utworz_lokal(p_nazwa, p_miasto);
+end;
+$$;
+
+create or replace function public.wyslij_do_weryfikacji(p_lokal uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.wyslij_do_weryfikacji(p_lokal);
+end;
+$$;
+
+create or replace function public.cofnij_zgloszenie(p_lokal uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.cofnij_zgloszenie(p_lokal);
+end;
+$$;
+
+create or replace function public.zatwierdz_lokal(p_lokal uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.zatwierdz_lokal(p_lokal);
+end;
+$$;
+
+create or replace function public.odrzuc_lokal(p_lokal uuid, p_powod text)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.odrzuc_lokal(p_lokal, p_powod);
+end;
+$$;
+
+create or replace function public.archiwizuj_lokal(p_lokal uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.archiwizuj_lokal(p_lokal);
+end;
+$$;
+
+create or replace function public.dodaj_czlonka(
+  p_lokal uuid,
+  p_email text,
+  p_rola public.rola_czlonka
+)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.dodaj_czlonka(p_lokal, p_email, p_rola);
+end;
+$$;
+
+create or replace function public.usun_czlonka(p_lokal uuid, p_profil uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  perform private.usun_czlonka(p_lokal, p_profil);
+end;
+$$;
+
+create or replace function public.lista_czlonkow(p_lokal uuid)
+returns table (profil_id uuid, email text, imie_nazwisko text, rola public.rola_czlonka)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select * from private.lista_czlonkow(p_lokal);
 $$;
 
 create or replace function public.szukaj_lokali(
@@ -1533,9 +1653,33 @@ revoke all on function public.archiwizuj_lokal(uuid) from public;
 revoke all on function public.dodaj_czlonka(uuid, text, public.rola_czlonka) from public;
 revoke all on function public.lista_czlonkow(uuid) from public;
 revoke all on function public.usun_czlonka(uuid, uuid) from public;
-revoke all on function public.bootstrap_admin(text) from public;
 revoke all on function public.szukaj_lokali(text, integer, text, integer, text, text) from public;
 revoke all on function public.publikacja_po_adresie(text, text) from public;
+
+revoke all on function private.zostan_wlascicielem() from public, anon, service_role;
+revoke all on function private.utworz_lokal(text, text) from public, anon, service_role;
+revoke all on function private.wyslij_do_weryfikacji(uuid) from public, anon, service_role;
+revoke all on function private.cofnij_zgloszenie(uuid) from public, anon, service_role;
+revoke all on function private.zatwierdz_lokal(uuid) from public, anon, service_role;
+revoke all on function private.odrzuc_lokal(uuid, text) from public, anon, service_role;
+revoke all on function private.archiwizuj_lokal(uuid) from public, anon, service_role;
+revoke all on function private.dodaj_czlonka(uuid, text, public.rola_czlonka) from public, anon, service_role;
+revoke all on function private.usun_czlonka(uuid, uuid) from public, anon, service_role;
+revoke all on function private.lista_czlonkow(uuid) from public, anon, service_role;
+revoke all on function private.bootstrap_admin(text) from public, anon, authenticated, service_role;
+
+-- Wrapper security invoker woła te funkcje jako authenticated. Schemat private
+-- nie jest w API, więc to nie jest osobny endpoint RPC.
+grant execute on function private.zostan_wlascicielem() to authenticated;
+grant execute on function private.utworz_lokal(text, text) to authenticated;
+grant execute on function private.wyslij_do_weryfikacji(uuid) to authenticated;
+grant execute on function private.cofnij_zgloszenie(uuid) to authenticated;
+grant execute on function private.zatwierdz_lokal(uuid) to authenticated;
+grant execute on function private.odrzuc_lokal(uuid, text) to authenticated;
+grant execute on function private.archiwizuj_lokal(uuid) to authenticated;
+grant execute on function private.dodaj_czlonka(uuid, text, public.rola_czlonka) to authenticated;
+grant execute on function private.usun_czlonka(uuid, uuid) to authenticated;
+grant execute on function private.lista_czlonkow(uuid) to authenticated;
 
 grant execute on function public.zostan_wlascicielem() to authenticated;
 grant execute on function public.utworz_lokal(text, text) to authenticated;
@@ -1547,7 +1691,6 @@ grant execute on function public.archiwizuj_lokal(uuid) to authenticated;
 grant execute on function public.dodaj_czlonka(uuid, text, public.rola_czlonka) to authenticated;
 grant execute on function public.lista_czlonkow(uuid) to authenticated;
 grant execute on function public.usun_czlonka(uuid, uuid) to authenticated;
-grant execute on function public.bootstrap_admin(text) to service_role;
 grant execute on function public.szukaj_lokali(text, integer, text, integer, text, text) to anon, authenticated;
 grant execute on function public.publikacja_po_adresie(text, text) to anon, authenticated;
 
@@ -1563,7 +1706,27 @@ values (
   false,
   8000000,
   array['image/jpeg', 'image/png', 'image/webp']
-);
+)
+on conflict (id) do update
+  set public = false,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create or replace function private.plik_jest_opublikowany(p_sciezka text)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.opublikowane_zdjecia z
+    where z.sciezka = p_sciezka
+  );
+$$;
+
+revoke all on function private.plik_jest_opublikowany(text) from public;
+grant execute on function private.plik_jest_opublikowany(text) to anon, authenticated, service_role;
 
 create policy zdjecia_odczyt_anon
   on storage.objects
@@ -1604,12 +1767,17 @@ create policy zdjecia_wstaw
     and lower(storage.extension(name)) in ('jpg', 'jpeg', 'png', 'webp')
   );
 
+-- Opublikowana ścieżka jest niemutowalna także dla administratora i właściciela.
+-- Inaczej podmiana bajtów albo delete zmienia stronę bez nowej akceptacji.
+-- Nowa wersja zdjęcia to nowy obiekt. Po kolejnej akceptacji stara ścieżka
+-- wypada z opublikowane_zdjecia i dopiero wtedy da się ją skasować.
 create policy zdjecia_podmien
   on storage.objects
   for update
   to authenticated
   using (
     bucket_id = 'zdjecia-lokali'
+    and not private.plik_jest_opublikowany(name)
     and (
       private.jest_admin()
       or private.jest_czlonkiem(private.uuid_albo_null((storage.foldername(name))[1]))
@@ -1617,6 +1785,7 @@ create policy zdjecia_podmien
   )
   with check (
     bucket_id = 'zdjecia-lokali'
+    and not private.plik_jest_opublikowany(name)
     and (
       private.jest_admin()
       or private.jest_czlonkiem(private.uuid_albo_null((storage.foldername(name))[1]))
@@ -1630,6 +1799,7 @@ create policy zdjecia_usun
   to authenticated
   using (
     bucket_id = 'zdjecia-lokali'
+    and not private.plik_jest_opublikowany(name)
     and (
       private.jest_admin()
       or private.jest_czlonkiem(private.uuid_albo_null((storage.foldername(name))[1]))
