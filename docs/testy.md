@@ -38,7 +38,7 @@ W tym środowisku `supabase start` nie dochodzi do końca: kontenery widzą sieb
 
 `psql -h 127.0.0.1 -p 54322 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/rls_security.test.sql`
 
-Wynik po tej poprawce: 53 testy, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
+Wynik po dopięciu `search_path`: 57 testów, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
 
 Nie uznaję za zaliczony testu, którego tu nie dało się uruchomić: pełnego stosu Supabase (Auth + Storage + PostgREST) przez `supabase start`. Publiczny odczyt i odmowa szkicu zostały sprawdzone dodatkowo przez PostgREST podłączony do tej samej bazy z sieci hosta: gość dostaje `permission denied` na tabeli `lokale`, a `szukaj_lokali` zwraca tylko opublikowany przykład.
 

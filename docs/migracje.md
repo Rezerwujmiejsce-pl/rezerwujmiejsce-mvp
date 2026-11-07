@@ -1,29 +1,43 @@
 # Migracje na projekt DEV
 
-Projekt: `rezerwujmiejsce-mvp-dev`, ref `uksiphxyrpanubfjixhg`, region Frankfurt. W momencie tej zmiany był pusty i **nie był ruszany z tego środowiska** — nie było uprawnionego dostępu.
+Projekt: `rezerwujmiejsce-mvp-dev`, ref `uksiphxyrpanubfjixhg`, region Frankfurt.
 
-Plik do wgrania, w tej kolejności, jako pierwsza migracja:
+## Już wgrane — nie powtarzać
 
-`supabase/migrations/20261107113350_init_schema_rls_storage.sql`
+Connector zapisał pierwszą migrację jako:
 
-## Jak wgrać (coordinator)
+| version | name |
+| --- | --- |
+| `20261107122010` | `init_schema_rls_storage` |
 
-Jedna z dróg, na maszynie osoby, która ma dostęp do projektu:
+Plik w repozytorium ma tę samą wersję w nazwie:
 
-1. **SQL Editor** w panelu Supabase: wkleić treść pliku i uruchomić. Potem sprawdzić, że w Database → Migrations historia się zgadza, albo zapisać tę samą wersję przez CLI, żeby kolejne `db push` nie próbowało wgrać jej drugi raz.
-2. **CLI**, po `supabase login` i świadomym powiązaniu:
-   ```bash
-   supabase link --project-ref uksiphxyrpanubfjixhg
-   supabase db push
-   ```
-   `link` pyta o hasło bazy. Nie wklejaj go do repozytorium.
+`supabase/migrations/20261107122010_init_schema_rls_storage.sql`
 
-Nie uruchamiaj `supabase/przyklad/seed.sql` na projekcie DEV. To lokale ćwiczeniowe.
+Wcześniejszy prefiks `20261107113350` był tylko lokalną nazwą pliku, zanim connector nadał wersję `20261107122010`. Na DEV tej starszej wersji nie ma. Nie wgrywaj pliku inicjalnego drugi raz: tabele już są, a powtórka się wywali.
+
+Dopasowanie historii jest zwykłą zmianą nazwy pliku w gicie. Stary commit nie był przepisywany. `supabase db push` porównuje numer wersji, więc plik `20261107122010` uzna za już zastosowany i go pominie.
+
+Świeża baza lokalna (`supabase db reset` albo pierwsze `supabase start`) puszcza pliki po kolei. Najpierw `20261107122010`, potem migrację z poprawką `search_path`.
+
+Jeśli jakaś **lokalna** baza ma w `supabase_migrations.schema_migrations` wersję `20261107113350` (bo ktoś odpalił starą nazwę pliku u siebie), nie ruszaj tym DEV. Lokalnie wystarczy `supabase db reset`. Nie uruchamiaj `migration repair` na projekcie zdalnym.
+
+## Następna do wgrania przez connector
+
+Tylko ten plik:
+
+`supabase/migrations/20261107122202_fix_private_function_search_path.sql`
+
+Ustawia pusty `search_path` na pięciu funkcjach pomocniczych (`zloz_tekst`, `zloz_miasto`, `slugify`, `uuid_albo_null`, `dotknij`). Nie zmienia ich treści, sygnatur ani danych. Nie tworzy użytkowników.
+
+## Czego nie wgrywać na DEV
+
+Nie uruchamiaj `supabase/przyklad/seed.sql`. To lokale ćwiczeniowe.
 
 Nie wgrywaj klucza `service_role` do Vercel jako zmiennej `NEXT_PUBLIC_*`.
 
-Po migracji nadaj administratora według [administrator.md](administrator.md), już na tym projekcie.
+Administratora nadaj według [administrator.md](administrator.md), już na tym projekcie, gdy ma powstać pierwsze konto. Sama migracja kont nie zakłada.
 
-Słowniki okazji i udogodnień są w tej samej migracji. To katalog startowy, nie lokale.
+Słowniki okazji i udogodnień są w migracji inicjalnej. To katalog startowy, nie lokale.
 
-Schemat `private` nie jest na liście schematów API (`supabase/config.toml` wystawia tylko `public`). Funkcje, które publikują lokal, sprawdzają rolę w tabeli `profile`, a nie pole, które użytkownik może sobie wpisać przy rejestracji.
+Schemat `private` nie jest na liście schematów API (`supabase/config.toml` wystawia tylko `public`).

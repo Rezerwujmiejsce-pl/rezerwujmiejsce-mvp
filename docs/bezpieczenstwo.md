@@ -36,6 +36,14 @@ Nie kopiujemy bajtów przy akceptacji. Kopiujemy ścieżkę, a polityki bronią 
 
 Adres `/media/...` bywa szkicem dla właściciela i 404 dla gościa, a po ukryciu lokalu ten sam adres przestaje być publiczny. Odpowiedź ma `Cache-Control: private, no-store`, `Vary: Cookie` i `CDN-Cache-Control: no-store` zarówno dla szkicu, jak i dla opublikowanego pliku. Współdzielony cache nie dostaje kopii, która przeżyłaby wycofanie publikacji.
 
+## search_path funkcji pomocniczych
+
+`private.zloz_tekst`, `zloz_miasto`, `slugify`, `uuid_albo_null` i `dotknij` nie miały przypiętego `search_path`. Advisor słusznie to zgłasza: przy wywołaniu dałoby się podmienić ścieżkę wyszukiwania.
+
+Poprawka jest osobną migracją `20261107122202_fix_private_function_search_path.sql`. To `alter function ... set search_path = ''`, bez zmiany treści. Wewnątrz są tylko funkcje z `pg_catalog` albo już kwalifikowane wywołanie `private.zloz_tekst`. Triggery i polityki, które ich używają, zostają te same.
+
+Migracja inicjalna na DEV ma wersję `20261107122010` i nie jest powtarzana. Do connectora idzie tylko ten drugi plik. Szczegóły: [migracje.md](migracje.md).
+
 ## Czego test nie zastępuje
 
 Pełny `supabase start` (Auth, Storage API, PostgREST w jednej sieci Dockera) w środowisku, w którym kontenery nie widzą się po TCP, nie wstaje. Test ról idzie bezpośrednio na Postgresie i sprawdza te same polityki, których używa Storage.

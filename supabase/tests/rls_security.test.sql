@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(53);
+select plan(57);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
@@ -105,6 +105,23 @@ select is(
   true,
   'zatwierdz_lokal jest security definer tylko w private'
 );
+
+select is(
+  (select count(*) from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'private'
+     and p.proname in ('zloz_tekst', 'zloz_miasto', 'slugify', 'uuid_albo_null', 'dotknij')
+     and exists (
+       select 1 from unnest(coalesce(p.proconfig, array[]::text[])) cfg
+       where cfg like 'search_path=%'
+     )),
+  5::bigint,
+  'funkcje pomocnicze mają ustawiony search_path'
+);
+
+select is(private.zloz_miasto('Zielona Góra'), 'zielona gora', 'składanie miasta działa przy ustawionym search_path');
+select is(private.slugify('Sala Testowa'), 'sala-testowa', 'slug działa przy ustawionym search_path');
+select is(private.uuid_albo_null('nie-uuid') is null, true, 'uuid_albo_null odrzuca zły tekst');
 
 select lives_ok(
   $$ select public.utworz_lokal('Sala Testowa', 'Zielona Góra') $$,
