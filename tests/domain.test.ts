@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadPublicHome } from "../src/data/home-load";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
   formatZloty,
@@ -47,6 +48,36 @@ test("status opublikowany nie udaje, że zmiany już weszły", () => {
   assert.match(statusLabel("published", "none", true), /niewysłane/);
   assert.match(statusLabel("published", "pending_review", false), /czekają/);
   assert.equal(statusLabel("draft", "none", false), "Szkic");
+});
+
+test("strona główna startuje sesję i katalog naraz", async () => {
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const task = (value: string) => async () => {
+    inFlight += 1;
+    maxInFlight = Math.max(maxInFlight, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    inFlight -= 1;
+    return value;
+  };
+  const started = performance.now();
+  const result = await loadPublicHome({
+    session: task("sesja"),
+    occasions: task("okazje"),
+    venues: task("lokale"),
+  });
+  const parallelMs = performance.now() - started;
+  const sequentialStarted = performance.now();
+  await task("sesja")();
+  await task("okazje")();
+  await task("lokale")();
+  const sequentialMs = performance.now() - sequentialStarted;
+  assert.equal(result.session, "sesja");
+  assert.equal(maxInFlight, 3);
+  assert.ok(
+    parallelMs < sequentialMs,
+    `równolegle ${parallelMs.toFixed(0)} ms nie było krótsze niż kolejno ${sequentialMs.toFixed(0)} ms`,
+  );
 });
 
 test("cache zdjęć nie jest publiczny ani po publikacji, ani dla szkicu", () => {

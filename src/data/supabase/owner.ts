@@ -111,11 +111,8 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
   }
   try {
     const supabase = await createClient();
-    const { data: venue, error } = await supabase.from("lokale").select("*").eq("id", id).maybeSingle();
-    if (error) return fromSupabaseError(error);
-    if (!venue) return { ok: true, data: null };
-
-    const [privateRow, occasions, amenities, rooms, photos, members] = await Promise.all([
+    const [venueResult, privateRow, occasions, amenities, rooms, photos, members] = await Promise.all([
+      supabase.from("lokale").select("*").eq("id", id).maybeSingle(),
       supabase.from("lokal_dane_prywatne").select("*").eq("lokal_id", id).maybeSingle(),
       supabase.from("lokal_okazje").select("kod").eq("lokal_id", id),
       supabase.from("lokal_udogodnienia").select("kod, szczegol").eq("lokal_id", id),
@@ -123,6 +120,9 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
       supabase.from("zdjecia").select("*").eq("lokal_id", id).order("kolejnosc"),
       supabase.rpc("lista_czlonkow", { p_lokal: id }),
     ]);
+    if (venueResult.error) return fromSupabaseError(venueResult.error);
+    const venue = venueResult.data;
+    if (!venue) return { ok: true, data: null };
     for (const result of [privateRow, occasions, amenities, rooms, photos, members]) {
       if (result.error) return fromSupabaseError(result.error);
     }

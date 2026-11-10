@@ -1,22 +1,28 @@
 import Link from "next/link";
 import { Header } from "../components/chrome";
+import { loadPublicHome } from "../data/home-load";
 import { listOccasions, searchVenues } from "../data/supabase/catalog";
 import { loadSession } from "../data/supabase/session";
 import { readPublicEnv, setupMessage } from "../data/setup";
 import { VenueGrid } from "../components/venue-grid";
 
 export default async function HomePage() {
-  const session = await loadSession();
   const env = readPublicEnv();
-  const occasions = env.ok ? await listOccasions() : null;
-  const venues = env.ok ? await searchVenues({
-    miasto: "Zielona Góra",
-    pojemnosc: null,
-    okazja: "",
-    cenaMaxGrosze: null,
-    udogodnienie: "",
-    sort: "cena",
-  }) : null;
+  const { session, occasions, venues } = await loadPublicHome({
+    session: () => loadSession(),
+    occasions: () => (env.ok ? listOccasions() : Promise.resolve(null)),
+    venues: () =>
+      env.ok
+        ? searchVenues({
+            miasto: "Zielona Góra",
+            pojemnosc: null,
+            okazja: "",
+            cenaMaxGrosze: null,
+            udogodnienie: "",
+            sort: "cena",
+          })
+        : Promise.resolve(null),
+  });
 
   return (
     <>

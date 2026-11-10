@@ -7,8 +7,9 @@
 -- (private.zloz_tekst). Pusty search_path jest więc bezpieczny: pg_catalog
 -- i tak jest przeszukiwany, a nic nie sięga do public po niekwalifikowanej nazwie.
 --
--- DEV ma już wersję 20261107122010 (init_schema_rls_storage). Tę migrację
--- wgrać jako następną. Nie powtarzać pliku inicjalnego.
+-- Na DEV ta treść jest już zapisana jako wersja 20261110082734
+-- (fix_private_function_search_path). Nie wgrywać jej drugi raz.
+-- Plik inicjalny 20261107122010 też jest już na DEV.
 
 alter function private.zloz_tekst(text) set search_path = '';
 alter function private.zloz_miasto(text) set search_path = '';

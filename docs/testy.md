@@ -40,6 +40,8 @@ W tym środowisku `supabase start` nie dochodzi do końca: kontenery widzą sieb
 
 Wynik po dopięciu `search_path`: 57 testów, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
 
+Test `strona główna startuje sesję i katalog naraz` porównuje lokalny harmonogram: trzy zadania po 30 ms naraz kontra te same trzy po kolei. To nie jest czas podglądu Vercel ani projektu DEV. `React.cache` wokół sesji deduplikuje odczyt w jednym renderze strony; runner `node:test` nie ma tego renderu, więc tego mechanizmu tu nie mierzymy.
+
 Nie uznaję za zaliczony testu, którego tu nie dało się uruchomić: pełnego stosu Supabase (Auth + Storage + PostgREST) przez `supabase start`. Publiczny odczyt i odmowa szkicu zostały sprawdzone dodatkowo przez PostgREST podłączony do tej samej bazy z sieci hosta: gość dostaje `permission denied` na tabeli `lokale`, a `szukaj_lokali` zwraca tylko opublikowany przykład.
 
 ## Czego test nie pokrywa

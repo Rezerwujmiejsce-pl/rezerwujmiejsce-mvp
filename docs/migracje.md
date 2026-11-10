@@ -4,31 +4,20 @@ Projekt: `rezerwujmiejsce-mvp-dev`, ref `uksiphxyrpanubfjixhg`, region Frankfurt
 
 ## Już wgrane — nie powtarzać
 
-Connector zapisał pierwszą migrację jako:
+Connector zapisał obie migracje. Numery w repozytorium są takie same jak na DEV:
 
-| version | name |
-| --- | --- |
-| `20261107122010` | `init_schema_rls_storage` |
+| version na DEV | name | plik |
+| --- | --- | --- |
+| `20261107122010` | `init_schema_rls_storage` | `supabase/migrations/20261107122010_init_schema_rls_storage.sql` |
+| `20261110082734` | `fix_private_function_search_path` | `supabase/migrations/20261110082734_fix_private_function_search_path.sql` |
 
-Plik w repozytorium ma tę samą wersję w nazwie:
+Pięć poleceń `ALTER FUNCTION ... SET search_path = ''` jest bez zmian. Zmieniona jest tylko nazwa pliku drugiej migracji: wcześniej w gicie było `20261107122202`, connector zapisał `20261110082734`. Historia zdalna nie była ruszana i plik nie był wgrywany drugi raz.
 
-`supabase/migrations/20261107122010_init_schema_rls_storage.sql`
+`supabase db push` porównuje numer wersji, więc oba pliki pominie. Świeża baza lokalna (`supabase start` albo `supabase db reset`) puszcza je po kolei: najpierw schemat, potem `search_path`.
 
-Wcześniejszy prefiks `20261107113350` był tylko lokalną nazwą pliku, zanim connector nadał wersję `20261107122010`. Na DEV tej starszej wersji nie ma. Nie wgrywaj pliku inicjalnego drugi raz: tabele już są, a powtórka się wywali.
+Starych prefiksów `20261107113350` i `20261107122202` na DEV nie ma. Nie dopisuj ich przez `migration repair` na projekcie zdalnym. Jeśli lokalna baza ma któryś z tych starych numerów, zresetuj ją u siebie (`supabase db reset`).
 
-Dopasowanie historii jest zwykłą zmianą nazwy pliku w gicie. Stary commit nie był przepisywany. `supabase db push` porównuje numer wersji, więc plik `20261107122010` uzna za już zastosowany i go pominie.
-
-Świeża baza lokalna (`supabase db reset` albo pierwsze `supabase start`) puszcza pliki po kolei. Najpierw `20261107122010`, potem migrację z poprawką `search_path`.
-
-Jeśli jakaś **lokalna** baza ma w `supabase_migrations.schema_migrations` wersję `20261107113350` (bo ktoś odpalił starą nazwę pliku u siebie), nie ruszaj tym DEV. Lokalnie wystarczy `supabase db reset`. Nie uruchamiaj `migration repair` na projekcie zdalnym.
-
-## Następna do wgrania przez connector
-
-Tylko ten plik:
-
-`supabase/migrations/20261107122202_fix_private_function_search_path.sql`
-
-Ustawia pusty `search_path` na pięciu funkcjach pomocniczych (`zloz_tekst`, `zloz_miasto`, `slugify`, `uuid_albo_null`, `dotknij`). Nie zmienia ich treści, sygnatur ani danych. Nie tworzy użytkowników.
+Ostrzeżenie advisora `auth_leaked_password_protection` zostało bez zmian. To ustawienie Auth, nie ta migracja.
 
 ## Czego nie wgrywać na DEV
 

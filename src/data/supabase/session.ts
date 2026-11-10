@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { readPublicEnv, type Setup } from "../setup";
 import { createClient } from "./server";
 
@@ -9,7 +10,7 @@ export type ProfileRow = {
   telefon: string | null;
 };
 
-export async function loadSession(): Promise<{
+async function loadSessionOnce(): Promise<{
   env: Setup;
   profile: ProfileRow | null;
   unreachable: boolean;
@@ -31,3 +32,6 @@ export async function loadSession(): Promise<{
     return { env, profile: null, unreachable: true };
   }
 }
+
+/** Jedno wywołanie na żądanie strony, także gdy Shell i strona czytają sesję osobno. */
+export const loadSession = cache(loadSessionOnce);

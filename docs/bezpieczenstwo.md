@@ -40,9 +40,9 @@ Adres `/media/...` bywa szkicem dla właściciela i 404 dla gościa, a po ukryci
 
 `private.zloz_tekst`, `zloz_miasto`, `slugify`, `uuid_albo_null` i `dotknij` nie miały przypiętego `search_path`. Advisor słusznie to zgłasza: przy wywołaniu dałoby się podmienić ścieżkę wyszukiwania.
 
-Poprawka jest osobną migracją `20261107122202_fix_private_function_search_path.sql`. To `alter function ... set search_path = ''`, bez zmiany treści. Wewnątrz są tylko funkcje z `pg_catalog` albo już kwalifikowane wywołanie `private.zloz_tekst`. Triggery i polityki, które ich używają, zostają te same.
+Poprawka jest w `supabase/migrations/20261110082734_fix_private_function_search_path.sql`. To pięć poleceń `alter function ... set search_path = ''`, bez zmiany treści. Wewnątrz są tylko funkcje z `pg_catalog` albo już kwalifikowane wywołanie `private.zloz_tekst`. Triggery i polityki, które ich używają, zostają te same.
 
-Migracja inicjalna na DEV ma wersję `20261107122010` i nie jest powtarzana. Do connectora idzie tylko ten drugi plik. Szczegóły: [migracje.md](migracje.md).
+Na DEV ta wersja jest już zapisana (connector nadał numer `20261110082734`). Nie wgrywać jej drugi raz. Szczegóły: [migracje.md](migracje.md). Ostrzeżenie `auth_leaked_password_protection` nie należy do tej migracji i zostaje bez zmian.
 
 ## Czego test nie zastępuje
 

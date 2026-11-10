@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Footer } from "../components/chrome";
 import "./globals.css";
 
+// Menu zależy od sesji. HTML nie jest cache'owany publicznie.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
