@@ -31,22 +31,13 @@ Nie dopisywać starych numerów `20261110084306`, `20261110091751`, `20261110091
 | `20261110092253` | `zapytania_limit_i_odczyt` | `supabase/migrations/20261110092253_zapytania_limit_i_odczyt.sql` |
 | `20261110095119` | `wycofaj_wlasny_lokal` | `supabase/migrations/20261110095119_wycofaj_wlasny_lokal.sql` |
 | `20261110095124` | `wstrzymaj_rezerwacje` | `supabase/migrations/20261110095124_wstrzymaj_rezerwacje.sql` |
+| `20261110095947` | `kalendarz_dostepnosci` | `supabase/migrations/20261110095947_kalendarz_dostepnosci.sql` |
+| `20261110095951` | `zawieszenie_lokalu` | `supabase/migrations/20261110095951_zawieszenie_lokalu.sql` |
+| `20261110095956` | `zapytania_admin` | `supabase/migrations/20261110095956_zapytania_admin.sql` |
 
 ## Już na DEV, pod nowym numerem — nie powtarzać
 
-`20261110092606` na DEV nazywa się `20261110095119`. `20261110092741` na DEV nazywa się `20261110095124`. SQL tych dwóch plików jest ten sam co przed zmianą nazwy. Nie wgrywać ich drugi raz i nie dopisywać starych numerów przez `migration repair`.
-
-## Jeszcze nie wgrane
-
-Po `20261110095124`, każdy raz, bez `db reset` i bez przykładowych wierszy:
-
-| plik | po co |
-| --- | --- |
-| `supabase/migrations/20261110095345_kalendarz_dostepnosci.sql` | blokady sali albo całego lokalu; `nowe` trzyma salę tylko do `wygasa_o` |
-| `supabase/migrations/20261110095347_zawieszenie_lokalu.sql` | administrator chowa stronę i może przywrócić tylko schowaną publikację |
-| `supabase/migrations/20261110095350_zapytania_admin.sql` | status `anulowane`, zmiana statusu przez administratora, bez płatności |
-
-Kolejność: `20261110095345`, potem `20261110095347`, potem `20261110095350`. Nie robić `db reset` i nie dopisywać przykładowych lokali. Żadnego z tych trzech plików nie wgrano na DEV z tego środowiska.
+`20261110092606` na DEV nazywa się `20261110095119`. `20261110092741` na DEV nazywa się `20261110095124`. `20261110095345` to `20261110095947`, `20261110095347` to `20261110095951`, `20261110095350` to `20261110095956`. SQL tych plików jest ten sam co przed zmianą nazwy. Nie wgrywać ich drugi raz i nie dopisywać starych numerów przez `migration repair`.
 
 Pasek publiczny zwraca tylko `dzien` i `stan` (`wolne`, `zajete`, `wstrzymane`). Zapytanie `nowe` zajmuje wskazaną salę do końca godzin lokalu albo na dwie godziny, gdy zamknięcia nie ma, ale tylko dopóki `wygasa_o` jest w przyszłości. `wygasa_o` to 24 godziny od utworzenia. Po tej chwili status zostaje `nowe`, a sala wraca do puli. Nie robi tego cron. `odrzucone`, `wygasle`, `anulowane` i `inny_termin` nie blokują. `zaakceptowane` znaczy ręcznie przyjęty termin, nie opłaconą rezerwację. Sala pusta w blokadzie oznacza cały lokal. Zajęta jedna sala nie oznacza całego dnia jako zajętego, dopóki inna opublikowana sala jest wolna. Właściciel nie zdejmie zapytania oznaczeniem „wolne”.
 

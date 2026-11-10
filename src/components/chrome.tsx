@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProfileRow } from "../data/supabase/session";
 import { signOut } from "../app/konto/actions";
 import { shortAccountLabel } from "../domain/inquiry";
+import { LogoLockup } from "./logo";
 import { MenuButton } from "./menu-button";
 import { ShareMenu } from "./share-menu";
 
@@ -18,7 +19,7 @@ export function Header({
     <nav className={solid ? "nav solid" : "nav"} aria-label="Główna">
       <div className="wrap">
         <Link className="logo" href="/" aria-label="rezerwujmiejsce.pl – strona główna">
-          <img src={solid ? "/img/logo-dark.svg" : "/img/logo-light.svg"} alt="rezerwujmiejsce.pl" width={200} height={27} />
+          <LogoLockup tone={solid ? "light" : "dark"} />
         </Link>
         <div className="nav-right">
           <ShareMenu path={sharePath} light={!solid} />
@@ -51,7 +52,9 @@ export function Footer() {
   return (
     <footer>
       <div className="wrap">
-        <img src="/img/logo-dark.svg" alt="rezerwujmiejsce.pl" width={150} height={20} />
+        <Link className="logo" href="/" aria-label="rezerwujmiejsce.pl – strona główna">
+          <LogoLockup tone="light" compact />
+        </Link>
         <p>
           Lokale na stronie pochodzą z bazy po weryfikacji. Zdjęcia kafli i baneru są materiałem układu z prototypu (Wikimedia Commons, CC BY-SA), nie ofertą lokalu.{" "}
           <Link href="/polityka-prywatnosci">Polityka prywatności</Link>

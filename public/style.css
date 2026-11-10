@@ -28,7 +28,13 @@ img{display:block;max-width:100%}a{color:inherit;text-decoration:none}button,inp
 .hero .ex{right:16px;bottom:16px}
 .nav{position:absolute;top:0;left:0;right:0;height:76px;z-index:5}
 .nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}
-.nav .logo img{width:200px;height:26.549px}
+.nav .logo{display:inline-flex;align-items:center;text-decoration:none}
+.logo-lockup{display:inline-flex;align-items:center;gap:.39em;font-family:var(--font-wordmark),"Instrument Sans",sans-serif;font-weight:600;font-size:15px;letter-spacing:-.02em;line-height:1;color:#141414;white-space:nowrap}
+.logo-lockup .sygnet{width:1.11em;height:1.11em;flex:none;display:block}
+.logo-lockup .dot{color:#C23654}
+.logo-lockup.on-dark{color:#F7F3EE}
+.logo-lockup.on-dark .dot{color:#DA8698}
+.logo-lockup.compact{font-size:11.25px}
 .nav ul{display:flex;gap:32px;list-style:none;margin:0;padding:0;font-weight:700;font-size:16px;line-height:1}
 .nav ul a:hover{text-decoration:underline}.nav .menu-btn{display:none}
 .hero-in{position:relative;z-index:2;width:100%}
@@ -110,8 +116,8 @@ img{display:block;max-width:100%}a{color:inherit;text-decoration:none}button,inp
 .host-photo{flex:1;position:relative}.host-photo img{width:100%;height:100%;object-fit:cover}.host-photo .ex{right:16px;bottom:16px}
 footer{border-top:1px solid var(--line);padding:32px 0 40px}
 footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px}
-footer img{width:150px;height:19.912px}footer p{margin:0;font-size:14px;line-height:1.45;color:var(--grey)}
-footer a{text-decoration:underline}
+footer .logo{text-decoration:none}footer p{margin:0;font-size:14px;line-height:1.45;color:var(--grey)}
+footer p a{text-decoration:underline}
 /* dialog + toast */
 dialog{border:0;border-radius:16px;padding:32px;width:min(480px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(0,0,0,.5)}
@@ -132,7 +138,7 @@ dialog .close{position:absolute;top:12px;right:12px;border:0;background:var(--so
  .nav ul{display:none}.nav .menu-btn{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:var(--r-md);background:#fff;color:var(--ink);border:0;font-weight:700;font-size:13px;cursor:pointer}
  .nav ul.open{display:flex;flex-direction:column;gap:0;position:absolute;top:60px;right:20px;background:#fff;color:var(--ink);border-radius:var(--r-lg);padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
  .nav ul.open a{display:block;padding:12px 14px}
- .nav .logo img{width:150px;height:19.912px}
+ .nav .logo-lockup{font-size:11.25px}
  .hero h1{font-size:40px;letter-spacing:-.8px}.lead{margin-top:12px;font-size:16px}
  .ai-field{padding:6px 6px 6px 16px}.ai-field input{font-size:16px}
  .sugg{top:60px}.sugg button{font-size:15px}
