@@ -1,6 +1,8 @@
--- Zapytania o termin. Nie stosować na DEV, dopóki operator nie wdroży
--- świadomie tej jednej, nowej wersji. Poprzednie migracje już są na DEV:
--- 20261107122010 i 20261110082734. Tej nie powtarzać po pierwszym zastosowaniu.
+-- Zapytania o termin. Na DEV ta wersja jest już wgrana jako
+-- 20261110091341 / zapytania_o_termin. Numer pliku jest taki sam.
+-- Nie wgrywać drugi raz. Starszego prefiksu 20261110084306 na DEV nie ma
+-- i nie wolno go dopisywać przez migration repair.
+-- Poprzednie migracje na DEV: 20261107122010 i 20261110082734.
 --
 -- Brak rezerwacji, zadatku, kalendarza, pakietów, maili i SMS-ów.
 -- Kolumny pakiet_id, wygasa_o i proponowany_termin celowo pominięte:
