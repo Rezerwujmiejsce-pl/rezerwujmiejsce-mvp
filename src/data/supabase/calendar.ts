@@ -40,6 +40,29 @@ export async function publicAvailability(venueId: string, from: string, to: stri
   }
 }
 
+/** Mapa id zapytania → wygasa_o. „legacy” gdy kolumny jeszcze nie ma na tej bazie. */
+export async function listInquiryExpiry(venueId: string): Promise<DataResult<Map<string, string | null> | "legacy">> {
+  if (!readPublicEnv().ok) return { ok: false, reason: "unconfigured", detail: "Brak konfiguracji bazy." };
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("zapytania").select("id, wygasa_o").eq("lokal_id", venueId);
+    if (error) {
+      const text = `${error.code ?? ""} ${error.message ?? ""}`;
+      if (/wygasa_o/i.test(text) && /42703|PGRST204|does not exist|schema cache/i.test(text)) {
+        return { ok: true, data: "legacy" };
+      }
+      return fromSupabaseError(error);
+    }
+    const map = new Map<string, string | null>();
+    for (const row of data ?? []) {
+      map.set(String(row.id), row.wygasa_o ? String(row.wygasa_o) : null);
+    }
+    return { ok: true, data: map };
+  } catch (error) {
+    return fromSupabaseError(error as { message: string });
+  }
+}
+
 export async function listBlocks(venueId: string): Promise<DataResult<OwnerBlock[]>> {
   if (!readPublicEnv().ok) return { ok: false, reason: "unconfigured", detail: "Brak konfiguracji bazy." };
   try {

@@ -29,20 +29,28 @@ Nie dopisywać starych numerów `20261110084306`, `20261110091751`, `20261110091
 | `20261110092221` | `potwierdzenie_zapytania` | `supabase/migrations/20261110092221_potwierdzenie_zapytania.sql` |
 | `20261110092234` | `strona_glowna` | `supabase/migrations/20261110092234_strona_glowna.sql` |
 | `20261110092253` | `zapytania_limit_i_odczyt` | `supabase/migrations/20261110092253_zapytania_limit_i_odczyt.sql` |
+| `20261110095119` | `wycofaj_wlasny_lokal` | `supabase/migrations/20261110095119_wycofaj_wlasny_lokal.sql` |
+| `20261110095124` | `wstrzymaj_rezerwacje` | `supabase/migrations/20261110095124_wstrzymaj_rezerwacje.sql` |
+
+## Już na DEV, pod nowym numerem — nie powtarzać
+
+`20261110092606` na DEV nazywa się `20261110095119`. `20261110092741` na DEV nazywa się `20261110095124`. SQL tych dwóch plików jest ten sam co przed zmianą nazwy. Nie wgrywać ich drugi raz i nie dopisywać starych numerów przez `migration repair`.
 
 ## Jeszcze nie wgrane
 
-Po `20261110092253`, każdy raz, bez `db reset` i bez przykładowych wierszy:
+Po `20261110095124`, każdy raz, bez `db reset` i bez przykładowych wierszy:
 
 | plik | po co |
 | --- | --- |
-| `supabase/migrations/20261110092606_wycofaj_wlasny_lokal.sql` | właściciel zdejmuje własny lokal z serwisu, zostawia wiersz i zapytania |
-| `supabase/migrations/20261110092741_wstrzymaj_rezerwacje.sql` | właściciel wstrzymuje nowe zapytania, strona zostaje |
-| `supabase/migrations/20261110093540_kalendarz_dostepnosci.sql` | blokady wybranego lokalu i sal, publiczny pasek bez danych gościa |
+| `supabase/migrations/20261110095345_kalendarz_dostepnosci.sql` | blokady sali albo całego lokalu; `nowe` trzyma salę tylko do `wygasa_o` |
+| `supabase/migrations/20261110095347_zawieszenie_lokalu.sql` | administrator chowa stronę i może przywrócić tylko schowaną publikację |
+| `supabase/migrations/20261110095350_zapytania_admin.sql` | status `anulowane`, zmiana statusu przez administratora, bez płatności |
 
-Kolejność po `20261110092253`: najpierw `20261110092606`, potem `20261110092741`, potem `20261110093540`. Każdy plik raz. Nie robić `db reset` i nie dopisywać przykładowych lokali. Kalendarz nie był wgrywany na DEV z tego środowiska. Test lokalny szedł na `rezerwuj_test` i kończył się `rollback`.
+Kolejność: `20261110095345`, potem `20261110095347`, potem `20261110095350`. Nie robić `db reset` i nie dopisywać przykładowych lokali. Żadnego z tych trzech plików nie wgrano na DEV z tego środowiska.
 
-Pasek publiczny zwraca tylko `dzien` i `stan` (`wolne`, `zajete`, `wstrzymane`). Zapytanie `nowe` zajmuje wskazaną salę do końca godzin lokalu albo na dwie godziny, gdy zamknięcia nie ma. Nie znika samo po 24 godzinach. `odrzucone`, `wygasle` i `inny_termin` nie blokują. `zaakceptowane` znaczy ręcznie przyjęty termin, nie opłaconą rezerwację; ta migracja takiego statusu nie ustawia. Sala pusta w blokadzie oznacza cały lokal. Zajęta jedna sala nie oznacza całego dnia jako zajętego, dopóki inna opublikowana sala jest wolna. Właściciel nie zdejmie zapytania oznaczeniem „wolne”.
+Pasek publiczny zwraca tylko `dzien` i `stan` (`wolne`, `zajete`, `wstrzymane`). Zapytanie `nowe` zajmuje wskazaną salę do końca godzin lokalu albo na dwie godziny, gdy zamknięcia nie ma, ale tylko dopóki `wygasa_o` jest w przyszłości. `wygasa_o` to 24 godziny od utworzenia. Po tej chwili status zostaje `nowe`, a sala wraca do puli. Nie robi tego cron. `odrzucone`, `wygasle`, `anulowane` i `inny_termin` nie blokują. `zaakceptowane` znaczy ręcznie przyjęty termin, nie opłaconą rezerwację. Sala pusta w blokadzie oznacza cały lokal. Zajęta jedna sala nie oznacza całego dnia jako zajętego, dopóki inna opublikowana sala jest wolna. Właściciel nie zdejmie zapytania oznaczeniem „wolne”.
+
+Zawieszenie administratora nie jest wstrzymaniem właściciela i nie jest wycofaniem. Zdejmuje migawkę ze strony i chowa ją. Przywrócenie wkłada tę migawkę z powrotem. Szkic właściciela nie wchodzi na stronę. Właściciel nie zdejmuje tego zawieszenia zapisem szkicu ani wycofaniem.
 
 Szczegóły: [zapytania.md](zapytania.md), [strona.md](strona.md). Brak wiersza w `strona_publikacja` jest stanem poprawnym.
 

@@ -1,6 +1,8 @@
 import { formatZloty } from "./rules";
 
-export type InquiryStatus = "nowe" | "inny_termin" | "odrzucone" | "wygasle" | "zaakceptowane";
+export type InquiryStatus = "nowe" | "inny_termin" | "odrzucone" | "wygasle" | "zaakceptowane" | "anulowane";
+
+export const DEPOSIT_LABEL = "brak obsługi płatności";
 
 export function inquiryStatusLabel(status: string): string {
   switch (status) {
@@ -13,10 +15,18 @@ export function inquiryStatusLabel(status: string): string {
     case "wygasle":
       return "Wygasłe";
     case "zaakceptowane":
-      return "Zaakceptowane w bazie";
+      return "Termin zaakceptowany, bez płatności";
+    case "anulowane":
+      return "Anulowane";
     default:
       return "Status nieznany";
   }
+}
+
+/** Etykieta w panelu administratora. „Potwierdzone” nie oznacza opłacenia. */
+export function adminInquiryStatusLabel(status: string): string {
+  if (status === "zaakceptowane") return "Potwierdzone (bez płatności)";
+  return inquiryStatusLabel(status);
 }
 
 /** Szacunek tylko z opublikowanego cennika sali. Godzina, dzień i pakiet nie dają jednej kwoty. */

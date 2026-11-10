@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(39);
+select plan(43);
 
 select is(
   (select (start_o at time zone 'UTC')::text
@@ -263,6 +263,38 @@ select lives_ok(
 );
 
 reset role;
+select ok(
+  (select wygasa_o > now() + interval '23 hours'
+     from public.zapytania
+    where email = 'kalendarz-gosc@example.test' and status = 'nowe'),
+  'nowe dostaje wygasa_o około 24 godzin do przodu'
+);
+select ok(
+  (select private.czy_nachodzi(fx.swoj, fx.sala_a, o.start_o, o.koniec_o)
+     from fx
+     cross join lateral private.okres_warszawa(fx.dzien, '14:00', '16:00', null, null) o),
+  'świeże nowe zajmuje salę'
+);
+select set_config('app.allow_inquiry_change', '1', true);
+update public.zapytania
+   set wygasa_o = now()
+ where email = 'kalendarz-gosc@example.test' and status = 'nowe';
+select is(
+  (select status::text from public.zapytania where email = 'kalendarz-gosc@example.test'),
+  'nowe',
+  'granica ważności nie przepisuje statusu'
+);
+select ok(
+  not (select private.czy_nachodzi(fx.swoj, fx.sala_a, o.start_o, o.koniec_o)
+         from fx
+         cross join lateral private.okres_warszawa(fx.dzien, '14:00', '16:00', null, null) o),
+  'w chwili wygasa_o sala już nie jest trzymana'
+);
+update public.zapytania
+   set wygasa_o = now() + interval '24 hours'
+ where email = 'kalendarz-gosc@example.test' and status = 'nowe';
+select set_config('app.allow_inquiry_change', '', true);
+
 select set_config('app.allow_inquiry_change', '1', true);
 update public.zapytania
    set status = 'odrzucone'
@@ -326,7 +358,8 @@ select lives_ok(
 reset role;
 select set_config('app.allow_inquiry_change', '1', true);
 update public.zapytania
-   set status = 'zaakceptowane'
+   set status = 'zaakceptowane',
+       wygasa_o = now()
  where email = 'kalendarz-gosc@example.test' and status = 'wygasle';
 select set_config('app.allow_inquiry_change', '', true);
 

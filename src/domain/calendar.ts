@@ -50,8 +50,19 @@ export function monthGrid(year: number, month: number): string[] {
   return days;
 }
 
-export function holdsBlock(status: string): boolean {
-  return status === "nowe" || status === "zaakceptowane";
+/**
+ * `nowe` trzyma termin tylko przed wygasa_o.
+ * Brak daty (undefined) oznacza starą bazę bez kolumny: wtedy nowe jeszcze trzyma.
+ * null oznacza kolumnę obecną, ale bez terminu — nie trzyma.
+ * `zaakceptowane` trzyma niezależnie od zegara i nie jest płatnością.
+ */
+export function holdsBlock(status: string, expiresAt?: string | null, nowMs = Date.now()): boolean {
+  if (status === "zaakceptowane") return true;
+  if (status !== "nowe") return false;
+  if (expiresAt === undefined) return true;
+  if (!expiresAt) return false;
+  const expiry = Date.parse(expiresAt);
+  return Number.isFinite(expiry) && expiry > nowMs;
 }
 
 export function saturdaysInMonth(isoDate: string, today = ""): string[] {

@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
 import { HOME_DEFAULTS, homeProblems, publicHome } from "../src/domain/home";
+import { adminPageNumber, ownerDisplayName, plainCityFilter } from "../src/domain/admin";
 import { holdsBlock, intervalsOverlap, periodConflicts, saturdaysInMonth, warsawLocalToUtc } from "../src/domain/calendar";
-import { acceptsInquiries, internalVenueTitle, pickOwnedVenue, plainTextProblem } from "../src/domain/venues";
-import { estimateFromRoom, inquiryProblems, inquirySuccessCopy, inquirySuccessPath, shortAccountLabel } from "../src/domain/inquiry";
+import { acceptsInquiries, internalVenueTitle, lifecycleGroup, pickOwnedVenue, plainTextProblem } from "../src/domain/venues";
+import { DEPOSIT_LABEL, adminInquiryStatusLabel, estimateFromRoom, inquiryProblems, inquirySuccessCopy, inquirySuccessPath, shortAccountLabel } from "../src/domain/inquiry";
 import { mapPoints, markerLabel, parseCoordinatePair, pointsInBounds } from "../src/domain/map-points";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
@@ -222,11 +223,28 @@ test("kalendarz: sale, Warszawa i statusy, które zajmują termin", () => {
   assert.equal(warsawLocalToUtc("2026-07-15", "12:00").toISOString(), "2026-07-15T10:00:00.000Z");
   assert.equal(warsawLocalToUtc("2026-01-15", "12:00").toISOString(), "2026-01-15T11:00:00.000Z");
   assert.deepEqual(saturdaysInMonth("2026-11-10", "2026-11-10"), ["2026-11-14", "2026-11-21", "2026-11-28"]);
-  assert.equal(holdsBlock("nowe"), true);
-  assert.equal(holdsBlock("zaakceptowane"), true);
-  assert.equal(holdsBlock("odrzucone"), false);
-  assert.equal(holdsBlock("wygasle"), false);
-  assert.equal(holdsBlock("inny_termin"), false);
+  const future = new Date(Date.now() + 60_000).toISOString();
+  const past = new Date(Date.now() - 60_000).toISOString();
+  const nowIso = new Date(Date.now()).toISOString();
+  assert.equal(holdsBlock("nowe", future), true);
+  assert.equal(holdsBlock("nowe", nowIso, Date.parse(nowIso)), false);
+  assert.equal(holdsBlock("nowe", past), false);
+  assert.equal(holdsBlock("nowe", undefined), true);
+  assert.equal(holdsBlock("zaakceptowane", past), true);
+  assert.equal(holdsBlock("odrzucone", future), false);
+  assert.equal(holdsBlock("wygasle", future), false);
+  assert.equal(holdsBlock("inny_termin", future), false);
+  assert.equal(holdsBlock("anulowane", future), false);
+  assert.equal(adminInquiryStatusLabel("zaakceptowane"), "Potwierdzone (bez płatności)");
+  assert.equal(DEPOSIT_LABEL, "brak obsługi płatności");
+  assert.equal(lifecycleGroup("suspended"), "zawieszony");
+  assert.equal(lifecycleGroup("pending_review"), "do weryfikacji");
+  assert.equal(lifecycleGroup("rejected"), "odrzucony");
+  assert.equal(ownerDisplayName("  "), "Brak nazwy w profilu");
+  assert.equal(ownerDisplayName("Anna Nowak"), "Anna Nowak");
+  assert.equal(plainCityFilter("%Żary_"), "Żary");
+  assert.equal(adminPageNumber("0"), 1);
+  assert.equal(adminPageNumber("2"), 2);
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

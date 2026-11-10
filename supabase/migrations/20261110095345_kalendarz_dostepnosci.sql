@@ -1,8 +1,10 @@
 -- Dostępność wybranego lokalu. Nie ma cen dnia, pakietów ani płatnych rezerwacji.
--- Zapytanie „nowe” zajmuje salę do odrzucenia. Nie wygasa samo po 24 h.
--- Odrzucone, wygasłe i „inny termin” nie blokują. „Zaakceptowane” znaczy ręcznie przyjęty termin,
+-- Zapytanie „nowe” zajmuje salę tylko do wygasa_o (24 h od utworzenia).
+-- Po tej chwili status zostaje „nowe”; cron go nie przepisuje.
+-- Odrzucone, wygasłe, anulowane i „inny termin” nie blokują. „Zaakceptowane” znaczy ręcznie przyjęty termin,
 -- nie opłaconą rezerwację. Ta funkcja go nie ustawia.
--- Nie wgrywać na DEV z tego środowiska. Po 20261110092253.
+-- Nie wgrywać na DEV z tego środowiska.
+-- Wersja pliku jest po 20261110095124. Tamte dwa pliki są już na DEV i ich SQL się nie zmienia.
 
 create table public.blokady_terminu (
   id uuid primary key default gen_random_uuid(),
@@ -23,6 +25,20 @@ create table public.blokady_terminu (
 
 comment on table public.blokady_terminu is
   'Blokada właściciela. sala_id puste = cały lokal. Gość tej tabeli nie czyta.';
+
+alter table public.zapytania
+  add column wygasa_o timestamptz;
+
+update public.zapytania
+   set wygasa_o = utworzono + interval '24 hours'
+ where wygasa_o is null;
+
+alter table public.zapytania
+  alter column wygasa_o set default (now() + interval '24 hours'),
+  alter column wygasa_o set not null;
+
+comment on column public.zapytania.wygasa_o is
+  'Do tej chwili status nowe trzyma salę. Później status się nie zmienia, a sala wraca do puli. Bez crona.';
 
 create index blokady_lokal_czas on public.blokady_terminu (lokal_id, start_o, koniec_o);
 
@@ -129,7 +145,10 @@ as $$
       coalesce(lp.godziny_do, l.godziny_do)
     ) o
     where z.lokal_id = p_lokal
-      and z.status in ('nowe', 'zaakceptowane')
+      and (
+        z.status = 'zaakceptowane'
+        or (z.status = 'nowe' and z.wygasa_o > now())
+      )
       and o.start_o < p_koniec
       and p_start < o.koniec_o
       and (p_sala is null or z.sala_id = p_sala)
@@ -349,7 +368,10 @@ begin
       coalesce(lp.godziny_do, l.godziny_do)
     ) o
     where z.lokal_id = p_lokal
-      and z.status in ('nowe', 'zaakceptowane')
+      and (
+        z.status = 'zaakceptowane'
+        or (z.status = 'nowe' and z.wygasa_o > now())
+      )
       and o.start_o < v_koniec
       and v_start < o.koniec_o
       and (p_sala is null or z.sala_id = p_sala)
@@ -445,7 +467,7 @@ grant execute on function public.dodaj_blokade(uuid, uuid, date, time, time, tex
 grant execute on function public.usun_blokade(uuid) to authenticated;
 grant execute on function public.pasek_dostepnosci(uuid, date, date) to anon, authenticated;
 
--- To samo ciało co w 20261110092741 plus odmowa terminu nachodzącego na blokadę
+-- To samo ciało co w 20261110095124 plus odmowa terminu nachodzącego na blokadę
 -- albo na zapytanie „nowe” / „zaakceptowane”. GRANT-y z 20261110091341 zostają.
 create or replace function private.wyslij_zapytanie(
   p_lokal uuid,
@@ -596,10 +618,11 @@ begin
   perform set_config('app.allow_inquiry_change', '1', true);
   insert into public.zapytania (
     lokal_id, sala_id, klient_id, okazja_kod, data, godzina_od, liczba_gosci,
-    imie_nazwisko, telefon, email, wiadomosc, status, kwota_szacunkowa, zrodlo
+    imie_nazwisko, telefon, email, wiadomosc, status, kwota_szacunkowa, zrodlo, wygasa_o
   ) values (
     p_lokal, p_sala, v_uid, v_okazja, p_data, p_godzina, p_goscie,
-    v_imie, v_telefon, v_email, v_wiadomosc, 'nowe', v_kwota, 'strona_lokalu'
+    v_imie, v_telefon, v_email, v_wiadomosc, 'nowe', v_kwota, 'strona_lokalu',
+    now() + interval '24 hours'
   )
   returning id into v_id;
   perform set_config('app.allow_inquiry_change', '', true);

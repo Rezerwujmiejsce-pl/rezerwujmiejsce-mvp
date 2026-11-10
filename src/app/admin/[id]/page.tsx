@@ -6,7 +6,7 @@ import { statusLabel } from "../../../domain/rules";
 import { getMine } from "../../../data/supabase/owner";
 import { loadSession } from "../../../data/supabase/session";
 import { readPublicEnv, setupMessage } from "../../../data/setup";
-import { approveVenue, archiveVenue, rejectVenue } from "../actions";
+import { approveVenue, archiveVenue, rejectVenue, restoreSuspendedVenue, suspendVenue } from "../actions";
 
 export default async function AdminVenuePage({
   params,
@@ -72,6 +72,21 @@ export default async function AdminVenuePage({
           <label>Powód odrzucenia<textarea name="powod" required placeholder="Co właściciel ma poprawić?" /></label>
           <button className="btn ghost" type="submit">Odrzuć</button>
         </form>
+        {data.status === "published" ? (
+          <form className="stack" action={suspendVenue}>
+            <input type="hidden" name="id" value={data.id} />
+            <label><input type="checkbox" name="potwierdz" value="tak" /> Zawieś lokal i schowaj stronę publiczną</label>
+            <button className="btn ghost" type="submit">Zawieś</button>
+          </form>
+        ) : null}
+        {data.status === "suspended" ? (
+          <form className="stack" action={restoreSuspendedVenue}>
+            <input type="hidden" name="id" value={data.id} />
+            <p className="help">Przywrócenie wkłada tylko poprzednią publikację. Szkic zostaje szkicem.</p>
+            <label><input type="checkbox" name="potwierdz" value="tak" /> Przywróć poprzednią publikację</label>
+            <button className="btn" type="submit">Przywróć publikację</button>
+          </form>
+        ) : null}
         <form action={archiveVenue}>
           <input type="hidden" name="id" value={data.id} />
           <button className="btn ghost" type="submit">Ukryj lokal</button>

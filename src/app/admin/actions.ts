@@ -34,6 +34,30 @@ export async function rejectVenue(formData: FormData) {
   redirect(`${target}?info=${encodeURIComponent("Zgłoszenie odrzucone. Poprzednia opublikowana wersja, jeśli była, zostaje na stronie.")}`);
 }
 
+export async function suspendVenue(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const target = `/admin/lokale`;
+  if (String(formData.get("potwierdz") ?? "") !== "tak") {
+    redirect(`${target}?blad=${encodeURIComponent("Zaznacz potwierdzenie zawieszenia.")}`);
+  }
+  const supabase = await adminDb();
+  const { error } = await supabase.rpc("zawies_lokal", { p_lokal: id });
+  if (error) redirect(`${target}?blad=${encodeURIComponent(fromSupabaseError(error).detail)}`);
+  redirect(`${target}?info=${encodeURIComponent("Lokal zawieszony. Strona publiczna zniknęła. Szkic nie został opublikowany.")}`);
+}
+
+export async function restoreSuspendedVenue(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const target = `/admin/lokale`;
+  if (String(formData.get("potwierdz") ?? "") !== "tak") {
+    redirect(`${target}?blad=${encodeURIComponent("Zaznacz potwierdzenie przywrócenia.")}`);
+  }
+  const supabase = await adminDb();
+  const { error } = await supabase.rpc("przywroc_zawieszony_lokal", { p_lokal: id });
+  if (error) redirect(`${target}?blad=${encodeURIComponent(fromSupabaseError(error).detail)}`);
+  redirect(`${target}?info=${encodeURIComponent("Przywrócono poprzednią publikację. Szkic właściciela nie wszedł na stronę.")}`);
+}
+
 export async function archiveVenue(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const supabase = await adminDb();

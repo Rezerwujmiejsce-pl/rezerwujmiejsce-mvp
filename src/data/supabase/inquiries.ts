@@ -58,6 +58,29 @@ export async function getOwnInquiry(userId: string, id: string): Promise<DataRes
   return result;
 }
 
+export async function listInquiryPage(filter: {
+  status?: string;
+  venueId?: string;
+  date?: string;
+  from: number;
+  to: number;
+}): Promise<DataResult<{ rows: InquiryRecord[]; total: number }>> {
+  const env = readPublicEnv();
+  if (!env.ok) return { ok: false, reason: "unconfigured", detail: "Brak konfiguracji bazy." };
+  try {
+    const supabase = await createClient();
+    let query = supabase.from("zapytania").select(columns, { count: "exact" }).order("utworzono", { ascending: false });
+    if (filter.status) query = query.eq("status", filter.status);
+    if (filter.venueId) query = query.eq("lokal_id", filter.venueId);
+    if (filter.date) query = query.eq("data", filter.date);
+    const { data, error, count } = await query.range(filter.from, filter.to);
+    if (error) return fromSupabaseError(error);
+    return { ok: true, data: { rows: await decorate(supabase, (data ?? []) as RawInquiry[]), total: count ?? 0 } };
+  } catch (error) {
+    return fromSupabaseError(error as { message: string });
+  }
+}
+
 export async function listInquiriesForVenue(venueId: string): Promise<DataResult<InquiryRecord[]>> {
   const listed = await listVenueInquiries();
   if (!listed.ok) return listed;

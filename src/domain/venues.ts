@@ -23,6 +23,8 @@ export function lifecycleGroup(status: VenueStatus): string {
       return "do weryfikacji";
     case "rejected":
       return "odrzucony";
+    case "suspended":
+      return "zawieszony";
   }
 }
 

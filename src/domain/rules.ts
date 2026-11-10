@@ -23,7 +23,7 @@ export const GUEST_UNITS = [
   ["dzieci", "dzieci"],
 ] as const;
 
-export type VenueStatus = "draft" | "pending_review" | "published" | "rejected" | "archived";
+export type VenueStatus = "draft" | "pending_review" | "published" | "rejected" | "archived" | "suspended";
 export type SubmissionState = "none" | "pending_review" | "rejected";
 export type ImageMime = "image/jpeg" | "image/png" | "image/webp";
 
@@ -52,6 +52,8 @@ export function statusLabel(
       return "Odrzucony";
     case "archived":
       return "Wycofany z serwisu";
+    case "suspended":
+      return "Zawieszony przez administratora";
   }
 }
 

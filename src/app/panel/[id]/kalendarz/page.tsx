@@ -5,7 +5,7 @@ import { VenueSwitcher } from "../../../../components/venue-switcher";
 import { Shell } from "../../../../components/shell";
 import { holdsBlock, monthGrid } from "../../../../domain/calendar";
 import { internalVenueTitle } from "../../../../domain/venues";
-import { listBlocks } from "../../../../data/supabase/calendar";
+import { listBlocks, listInquiryExpiry } from "../../../../data/supabase/calendar";
 import { listInquiriesForVenue } from "../../../../data/supabase/inquiries";
 import { getMine, listMine } from "../../../../data/supabase/owner";
 import { loadSession } from "../../../../data/supabase/session";
@@ -28,11 +28,12 @@ export default async function VenueCalendarPage({
   }
   const session = await loadSession();
   if (!session.profile) redirect(`/logowanie?next=${encodeURIComponent(path)}`);
-  const [venue, mine, blocks, inquiries] = await Promise.all([
+  const [venue, mine, blocks, inquiries, expiry] = await Promise.all([
     getMine(id),
     listMine(),
     listBlocks(id),
     listInquiriesForVenue(id),
+    listInquiryExpiry(id),
   ]);
   if (!venue.ok) {
     return <Shell sharePath={path}><main className="wrap page-pad"><p className="notice bad">{venue.detail}</p></main></Shell>;
@@ -42,7 +43,11 @@ export default async function VenueCalendarPage({
   const [year, month] = (query.miesiac ?? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`).split("-").map(Number);
   const days = Number.isInteger(year) && Number.isInteger(month) ? monthGrid(year, month) : monthGrid(today.getFullYear(), today.getMonth() + 1);
   const selected = query.dzien && days.includes(query.dzien) ? query.dzien : "";
-  const holds = inquiries.ok ? inquiries.data.filter((row) => holdsBlock(row.status)) : [];
+  const legacyExpiry = expiry.ok && expiry.data === "legacy";
+  const expiryMap = expiry.ok && expiry.data !== "legacy" ? expiry.data : null;
+  const holds = inquiries.ok
+    ? inquiries.data.filter((row) => holdsBlock(row.status, legacyExpiry ? undefined : expiryMap?.get(row.id) ?? null))
+    : [];
   const prefix = `${year}-${String(month).padStart(2, "0")}`;
   const prev = new Date(Date.UTC(year, month - 2, 1));
   const next = new Date(Date.UTC(year, month, 1));
@@ -55,7 +60,7 @@ export default async function VenueCalendarPage({
         <p><Link href={`/panel/${id}`}>← {internalVenueTitle(venue.data.nazwa)}</Link></p>
         <h1 className="disp">Kalendarz dostępności</h1>
         <p className="help">
-          To nie jest klatka z Figmy i nie ma tu cen dnia ani pakietów. Zapytanie o statusie „nowe” zajmuje wskazaną salę do czasu odrzucenia albo do końca godzin lokalu. Nie znika samo po 24 godzinach. Odrzucone, wygasłe i „inny termin” nie blokują. „Zaakceptowane” znaczy ręcznie przyjęty termin, nie płatność. Oznaczenie „wolne” nie odwołuje zapytania.
+          To nie jest klatka z Figmy i nie ma tu cen dnia ani pakietów. Zapytanie „nowe” trzyma wskazaną salę przez 24 godziny od utworzenia, do kolumny wygasa_o. Po tej chwili status zostaje „nowe”, a sala wraca do puli. Nie robi tego cron. Odrzucone, wygasłe, anulowane i „inny termin” nie blokują. „Zaakceptowane” znaczy ręcznie przyjęty termin, nie płatność, i trzyma salę dalej. Oznaczenie „wolne” nie odwołuje zapytania.
         </p>
         <Flash info={query.info} blad={query.blad} />
         <p className="row-actions">
@@ -124,6 +129,8 @@ export default async function VenueCalendarPage({
         ) : null}
         {!blocks.ok ? <p className="notice bad">{blocks.detail}</p> : null}
         {!inquiries.ok ? <p className="notice bad">{inquiries.detail}</p> : null}
+        {legacyExpiry ? <p className="notice">Na tej bazie nie ma jeszcze kolumny wygasa_o. Dopóki migracja kalendarza nie wejdzie, świeże zapytanie jest tu pokazane jako zajmujące.</p> : null}
+        {expiry.ok ? null : <p className="notice bad">{expiry.detail}</p>}
         <h2>Blokady</h2>
         {blocks.ok && blocks.data.length === 0 ? <p>Brak blokad właściciela.</p> : null}
         {blocks.ok ? blocks.data.map((block) => (

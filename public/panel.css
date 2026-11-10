@@ -28,6 +28,7 @@
 .map-note a{font-weight:700}
 .page-pad{padding:28px 0 72px}
 .auth{max-width:480px;margin:32px auto}
+.table-scroll{overflow:auto}
 table.plain{width:100%;border-collapse:collapse}
 table.plain th,table.plain td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:12px 0 24px}
