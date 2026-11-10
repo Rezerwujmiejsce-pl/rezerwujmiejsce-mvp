@@ -4,7 +4,7 @@ body.sub{background:#fff}
 .nav.solid .wrap{max-width:none;padding:0 40px;gap:24px}
 .nav.solid .nav-btn{background:#fff;color:var(--ink);border-color:var(--ink)}
 .nav.solid .nav-btn:hover{background:var(--soft)}
-.nav.solid .logo-lockup{font-size:15px}
+.nav.solid .logo-lockup{--logo-font:22px;--logo-mark:32px;--logo-gap:10px}
 .nav .pill-search{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:6px 6px 6px 8px;gap:0;font-weight:700;font-size:13px}
 .nav .pill-search span{padding:0 16px;border-right:1px solid var(--line);white-space:nowrap}.nav .pill-search span:nth-last-of-type(1){border-right:0}
 .nav .pill-search a{width:34px;height:34px;border-radius:999px;background:var(--acc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
@@ -282,7 +282,7 @@ h2.st{margin:0 0 14px;font-family:var(--display);font-size:22px;line-height:1.2;
  .two,.prices{grid-template-columns:1fr}
 }
 @media (max-width:760px){
- .nav.solid .wrap{padding:0 20px}.nav.solid .logo-lockup{font-size:11.25px}
+ .nav.solid .wrap{padding:0 20px}.nav.solid .logo-lockup{--logo-font:18px;--logo-mark:26px;--logo-gap:8px}
  .nav .pill-search{display:none}.nav.solid .nav-btn{border-color:var(--ink)}
  .nav.solid .menu-btn{border:1px solid var(--ink)}
  .fbar{top:61px}.fbar .wrap{padding:10px 20px}
@@ -306,6 +306,9 @@ h2.st{margin:0 0 14px;font-family:var(--display);font-size:22px;line-height:1.2;
  .drawer .panel{width:100%;padding:20px}
  .rules{grid-template-columns:1fr}
  .cmpt{min-width:720px}
+}
+@media (max-width:380px){
+ .nav.solid .logo-lockup{--logo-font:16px;--logo-mark:24px;--logo-gap:8px}
 }
 .days .dbtn{width:76px;border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;border:1px solid var(--acc);color:var(--acc);background:#fff;cursor:pointer}
 .linkbtn{background:none;border:0;padding:0;font-weight:700;font-size:13px;cursor:pointer}

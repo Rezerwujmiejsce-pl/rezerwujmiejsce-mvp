@@ -74,10 +74,11 @@ export function ShareMenu({ path, light }: { path: string; light?: boolean }) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={id}
+        aria-label="Udostępnij"
         onClick={() => setOpen((value) => !value)}
       >
         <img src={light ? "/img/icons/share-white.svg" : "/img/icons/share.svg"} width={18} height={18} alt="" />
-        Udostępnij
+        <span className="share-label">Udostępnij</span>
       </button>
       <div className="share-pop" id={id} role="menu" hidden={!open}>
         <div className="share-grid">
