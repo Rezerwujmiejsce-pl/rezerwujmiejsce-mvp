@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { Header } from "../components/chrome";
+import { publicHome } from "../domain/home";
 import { loadPublicHome } from "../data/home-load";
 import { listOccasions, searchVenues } from "../data/supabase/catalog";
+import { loadPublishedHome } from "../data/supabase/home";
 import { loadSession } from "../data/supabase/session";
 import { readPublicEnv, setupMessage } from "../data/setup";
 import { VenueGrid } from "../components/venue-grid";
 
 export default async function HomePage() {
   const env = readPublicEnv();
-  const { session, occasions, venues } = await loadPublicHome({
+  const { session, occasions, venues, copy } = await loadPublicHome({
     session: () => loadSession(),
     occasions: () => (env.ok ? listOccasions() : Promise.resolve(null)),
     venues: () =>
@@ -22,16 +24,21 @@ export default async function HomePage() {
             sort: "cena",
           })
         : Promise.resolve(null),
+    copy: () => (env.ok ? loadPublishedHome() : Promise.resolve(null)),
   });
+  const face = publicHome(
+    copy?.ok ? copy.data.publication : null,
+    occasions?.ok ? occasions.data : [],
+  );
 
   return (
     <>
       <header className="hero">
-        <div className="hero-bg"><img src="/img/hero.webp" alt="" /></div>
+        <div className="hero-bg"><img src={face.baner} alt="" /></div>
         <Header profile={session.profile} sharePath="/" />
         <div className="wrap hero-in">
-          <h1 className="disp">Sala na każdą rodzinną okazję</h1>
-          <p className="lead">Urodziny, komunie i przyjęcia. Najpierw w Zielonej Górze, a wyszukiwarka przyjmuje też inne miasta.</p>
+          <h1 className="disp">{face.naglowek}</h1>
+          <p className="lead">{face.podtytul}</p>
           <form className="classic open" action="/sale" method="get" role="search">
             <label>
               <span>Okazja</span>
@@ -66,14 +73,18 @@ export default async function HomePage() {
           <div className="wrap">
             <div className="sec-head"><h2 className="disp">Na jaką okazję?</h2><Link href="/sale">Wszystkie lokale</Link></div>
             <div className="tiles">
-              {occasions?.ok ? occasions.data.map((item) => (
+              {occasions && !occasions.ok ? (
+                <p className="notice bad">{occasions.detail}</p>
+              ) : !env.ok ? (
+                <p className="notice bad">{setupMessage(env.missing)}</p>
+              ) : face.kafle.length ? face.kafle.map((item) => (
                 <Link key={item.kod} className="tile" href={`/sale?okazja=${encodeURIComponent(item.kod)}&miasto=Zielona+Góra`}>
                   {item.zdjecie ? <img src={item.zdjecie} alt="" /> : <span className="empty-photo">Brak zdjęcia kafla</span>}
                   {item.zdjecie ? <span className="ex">ZDJĘCIE PRZYKŁADOWE</span> : null}
                   <span className="t">{item.nazwa_kafla}</span>
                 </Link>
               )) : (
-                <p className="notice bad">{env.ok ? "Nie udało się odczytać okazji." : setupMessage(env.missing)}</p>
+                <p className="help">Żaden kafel nie jest teraz widoczny.</p>
               )}
             </div>
           </div>

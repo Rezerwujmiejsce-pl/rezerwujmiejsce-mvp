@@ -1,12 +1,14 @@
-export async function loadPublicHome<S, O, V>(input: {
+export async function loadPublicHome<S, O, V, C = null>(input: {
   session: () => Promise<S>;
   occasions: () => Promise<O>;
   venues: () => Promise<V>;
-}): Promise<{ session: S; occasions: O; venues: V }> {
-  const [session, occasions, venues] = await Promise.all([
+  copy?: () => Promise<C>;
+}): Promise<{ session: S; occasions: O; venues: V; copy: C | null }> {
+  const [session, occasions, venues, copy] = await Promise.all([
     input.session(),
     input.occasions(),
     input.venues(),
+    input.copy ? input.copy() : Promise.resolve(null),
   ]);
-  return { session, occasions, venues };
+  return { session, occasions, venues, copy };
 }

@@ -1,11 +1,8 @@
-import { formatZloty } from "./rules";
-
 export type MapHit = {
   id: string;
   lat: number | null;
   lng: number | null;
-  cenaMinGrosze: number | null;
-  cenaNaZapytanie: boolean;
+  cena: string;
   href: string;
   nazwa: string;
 };
@@ -42,12 +39,10 @@ export function parseCoordinatePair(latRaw: string, lngRaw: string): { lat: numb
   return { lat, lng };
 }
 
-export function markerLabel(grosze: number | null, onRequest: boolean): { text: string; priced: boolean } {
-  if (grosze != null && Number.isSafeInteger(grosze) && grosze >= 0) {
-    return { text: `od ${formatZloty(grosze)}`, priced: true };
-  }
-  if (onRequest) return { text: "na zapytanie", priced: false };
-  return { text: "bez ceny", priced: false };
+/** Ta sama linia co na karcie: „od” zostaje z jednostką (za osobę, za salę, za godzinę). */
+export function markerLabel(cena: string): { text: string; priced: boolean } {
+  if (cena === "cena na zapytanie" || cena.trim() === "") return { text: "na zapytanie", priced: false };
+  return { text: cena, priced: true };
 }
 
 function usable(lat: number | null, lng: number | null): lat is number {
@@ -68,7 +63,7 @@ export function mapPoints(hits: MapHit[]): MapPoint[] {
   const points: MapPoint[] = [];
   for (const hit of hits) {
     if (!usable(hit.lat, hit.lng) || hit.lng == null) continue;
-    const label = markerLabel(hit.cenaMinGrosze, hit.cenaNaZapytanie);
+    const label = markerLabel(hit.cena);
     points.push({
       id: hit.id,
       lat: hit.lat,

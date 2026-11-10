@@ -79,6 +79,25 @@ export function shortAccountLabel(name: string | null, email: string | null): st
   return local || "Konto";
 }
 
+export function inquirySuccessPath(formPath: string): string {
+  const path = formPath.split("?")[0]?.split("#")[0] ?? "/sale";
+  return `${path}/wyslane`;
+}
+
+export function inquirySuccessCopy(confirmed: boolean, venueName: string | null): { title: string; body: string } {
+  if (!confirmed) {
+    return {
+      title: "Potwierdzenie po zapisie",
+      body: "Ten adres sam niczego nie zapisuje i nie zawiera danych zapytania. Potwierdzenie widać tylko w tej przeglądarce, zaraz po udanym zapisie w bazie. Nie wysyłamy SMS-a ani e-maila.",
+    };
+  }
+  const where = venueName ? `Zapisaliśmy zapytanie do lokalu ${venueName}. ` : "Zapisaliśmy zapytanie. ";
+  return {
+    title: "Zapytanie jest w portalu",
+    body: `${where}Lokal zobaczy je w panelu. Nie wysłaliśmy SMS-a ani e-maila. To nie jest rezerwacja, nie ma zadatku i termin nie jest potwierdzony.`,
+  };
+}
+
 export function guestCountLabel(count: number): string {
   if (count === 1) return "1 osoba";
   const mod10 = count % 10;

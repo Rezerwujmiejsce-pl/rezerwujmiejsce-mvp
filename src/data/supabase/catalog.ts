@@ -40,6 +40,7 @@ export type Occasion = {
   nazwa: string;
   nazwa_kafla: string;
   zdjecie: string | null;
+  kolejnosc: number;
 };
 
 export type Amenity = { kod: string; nazwa: string; filtr: boolean };
@@ -103,10 +104,19 @@ export async function listOccasions(): Promise<DataResult<Occasion[]>> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("okazje")
-      .select("kod, nazwa, nazwa_kafla, zdjecie")
+      .select("kod, nazwa, nazwa_kafla, zdjecie, kolejnosc")
       .order("kolejnosc");
     if (error) return fromSupabaseError(error);
-    return { ok: true, data: data ?? [] };
+    return {
+      ok: true,
+      data: (data ?? []).map((row) => ({
+        kod: String(row.kod),
+        nazwa: String(row.nazwa),
+        nazwa_kafla: String(row.nazwa_kafla),
+        zdjecie: row.zdjecie ? String(row.zdjecie) : null,
+        kolejnosc: Number(row.kolejnosc ?? 0),
+      })),
+    };
   } catch (error) {
     return fromSupabaseError(error as { message: string });
   }

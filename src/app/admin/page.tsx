@@ -23,6 +23,7 @@ export default async function AdminPage({
     <Shell sharePath="/admin">
       <main className="wrap page-pad">
         <h1 className="disp">Weryfikacja lokali</h1>
+        {session.profile?.rola === "admin" ? <p><Link href="/admin/strona">Tekst strony głównej</Link></p> : null}
         <p className="help">Publikację robi ta strona, wołając funkcję w bazie. Przeglądarka nie dostaje klucza serwisowego. Roli administratora nie nadaje się stąd.</p>
         <Flash blad={params.blad} info={params.info} />
         {!env.ok ? <p className="notice bad">{setupMessage(env.missing)}</p> : null}

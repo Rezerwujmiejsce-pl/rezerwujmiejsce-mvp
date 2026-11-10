@@ -21,7 +21,21 @@ Ostrzeżenie advisora `auth_leaked_password_protection` zostało bez zmian. To u
 
 ## Nowa, jeszcze nie wgrana
 
-`supabase/migrations/20261110084306_zapytania_o_termin.sql` — zapytania o termin. Nie ma jej na DEV. Nie wgrywaj jej razem z poprawką starych plików i nie powtarzaj dwóch pierwszych migracji. Po świadomym wdrożeniu tylko tego pliku historia dostanie trzeci numer. Szczegóły: [zapytania.md](zapytania.md).
+Na DEV jest już trzecia migracja. Nie wgrywać jej drugi raz i nie dopisywać starego numeru `20261110084306` przez `migration repair`.
+
+| version na DEV | name | plik |
+| --- | --- | --- |
+| `20261110091341` | `zapytania_o_termin` | `supabase/migrations/20261110091341_zapytania_o_termin.sql` |
+
+Jeszcze nie wgrane. Po kolei, każdy raz, bez `db reset` i bez przykładowych wierszy:
+
+| plik | po czym |
+| --- | --- |
+| `supabase/migrations/20261110091751_potwierdzenie_zapytania.sql` | `20261110091341` |
+| `supabase/migrations/20261110091752_strona_glowna.sql` | `20261110091341`; nie zależy od potwierdzenia |
+| `supabase/migrations/20261110091756_zapytania_limit_i_odczyt.sql` | `20261110091341`; podmienia tylko ciało `private.wyslij_zapytanie` i politykę odczytu |
+
+Szczegóły: [zapytania.md](zapytania.md), [strona.md](strona.md). Brak wiersza w `strona_publikacja` jest stanem poprawnym.
 
 ## Czego nie wgrywać na DEV
 

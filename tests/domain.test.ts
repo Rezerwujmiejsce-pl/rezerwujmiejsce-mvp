@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
-import { estimateFromRoom, inquiryProblems, shortAccountLabel } from "../src/domain/inquiry";
+import { HOME_DEFAULTS, homeProblems, publicHome } from "../src/domain/home";
+import { estimateFromRoom, inquiryProblems, inquirySuccessCopy, inquirySuccessPath, shortAccountLabel } from "../src/domain/inquiry";
 import { mapPoints, markerLabel, parseCoordinatePair, pointsInBounds } from "../src/domain/map-points";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
@@ -67,15 +68,18 @@ test("strona główna startuje sesję i katalog naraz", async () => {
     session: task("sesja"),
     occasions: task("okazje"),
     venues: task("lokale"),
+    copy: task("tekst"),
   });
   const parallelMs = performance.now() - started;
   const sequentialStarted = performance.now();
   await task("sesja")();
   await task("okazje")();
   await task("lokale")();
+  await task("tekst")();
   const sequentialMs = performance.now() - sequentialStarted;
   assert.equal(result.session, "sesja");
-  assert.equal(maxInFlight, 3);
+  assert.equal(result.copy, "tekst");
+  assert.equal(maxInFlight, 4);
   assert.ok(
     parallelMs < sequentialMs,
     `równolegle ${parallelMs.toFixed(0)} ms nie było krótsze niż kolejno ${sequentialMs.toFixed(0)} ms`,
@@ -121,21 +125,65 @@ test("pinezki biorą tylko prawdziwe współrzędne i cenę z cennika", () => {
   assert.deepEqual(parseCoordinatePair("", ""), { lat: null, lng: null });
   assert.deepEqual(parseCoordinatePair("51,93", "15.50"), { lat: 51.93, lng: 15.5 });
   assert.throws(() => parseCoordinatePair("120", "15"), /90/);
+  const perPerson = priceLine(10000, "za_osobe", false);
+  const perVenue = priceLine(240000, "za_sale", false);
+  const perHour = priceLine(10000, "za_godzine", false);
   const hits = [
-    { id: "a", lat: 51.93, lng: 15.5, cenaMinGrosze: 240000, cenaNaZapytanie: false, href: "/sale/a", nazwa: "A" },
-    { id: "b", lat: null, lng: 15.5, cenaMinGrosze: 100, cenaNaZapytanie: false, href: "/sale/b", nazwa: "B" },
-    { id: "c", lat: 52, lng: 16, cenaMinGrosze: null, cenaNaZapytanie: true, href: "/sale/c", nazwa: "C" },
-    { id: "d", lat: 91, lng: 15, cenaMinGrosze: 100, cenaNaZapytanie: false, href: "/sale/d", nazwa: "D" },
+    { id: "a", lat: 51.93, lng: 15.5, cena: perVenue, href: "/sale/a", nazwa: "A" },
+    { id: "b", lat: null, lng: 15.5, cena: perPerson, href: "/sale/b", nazwa: "B" },
+    { id: "c", lat: 52, lng: 16, cena: "cena na zapytanie", href: "/sale/c", nazwa: "C" },
+    { id: "d", lat: 91, lng: 15, cena: perHour, href: "/sale/d", nazwa: "D" },
   ];
   const points = mapPoints(hits);
   assert.deepEqual(points.map((point) => point.id), ["a", "c"]);
-  assert.equal(points[0]?.priced, true);
-  assert.match(points[0]?.label ?? "", /2\s?400 zł/);
+  assert.equal(points[0]?.label, perVenue);
+  assert.match(points[0]?.label ?? "", /za salę/);
+  assert.match(perPerson, /za osobę/);
+  assert.match(perHour, /za godzinę/);
+  assert.equal(markerLabel(perHour).text, perHour);
   assert.equal(points[1]?.label, "na zapytanie");
-  assert.equal(markerLabel(null, false).text, "bez ceny");
+  assert.equal(markerLabel("").text, "na zapytanie");
   const inside = pointsInBounds(points, { south: 51, west: 15, north: 52, east: 16 });
   assert.deepEqual(inside.map((point) => point.id), ["a", "c"]);
   assert.deepEqual(pointsInBounds(points, { south: 60, west: 15, north: 52, east: 16 }), []);
+});
+
+test("adres potwierdzenia nie ogłasza zapisu i nie niesie danych", () => {
+  const path = inquirySuccessPath("/sale/zielona-gora/sala/zapytanie?zapis=1&email=a@b.c");
+  assert.equal(path, "/sale/zielona-gora/sala/zapytanie/wyslane");
+  assert.equal(path.includes("?"), false);
+  assert.equal(path.includes("@"), false);
+  const forged = inquirySuccessCopy(false, "Sala Testowa");
+  assert.equal(forged.title.includes("jest w portalu"), false);
+  assert.equal(forged.body.includes("Zapisaliśmy"), false);
+  assert.equal(forged.body.includes("Sala Testowa"), false);
+  const real = inquirySuccessCopy(true, "Sala Testowa");
+  assert.match(real.body, /Zapisaliśmy zapytanie do lokalu Sala Testowa/);
+  assert.match(real.body, /Nie wysłaliśmy SMS-a ani e-maila/);
+});
+
+test("szkic strony głównej nie zastępuje tekstu, dopóki nie ma publikacji", () => {
+  const catalog = [
+    { kod: "urodziny", nazwa: "Urodziny", nazwa_kafla: "Urodziny", zdjecie: "/img/kat-urodziny.webp", kolejnosc: 2 },
+    { kod: "komunia", nazwa: "Komunia", nazwa_kafla: "Komunie", zdjecie: "/img/kat-komunie.webp", kolejnosc: 1 },
+  ];
+  const defaults = publicHome(null, catalog);
+  assert.equal(defaults.naglowek, HOME_DEFAULTS.naglowek);
+  assert.deepEqual(defaults.kafle.map((tile) => tile.kod), ["komunia", "urodziny"]);
+  const published = publicHome({
+    naglowek: "Inny nagłówek",
+    podtytul: "Inny podtytuł strony głównej.",
+    baner: "/img/hero-800.jpg",
+    kafle: [
+      { kod: "urodziny", kolejnosc: 1, widoczna: true },
+      { kod: "komunia", kolejnosc: 2, widoczna: false },
+    ],
+  }, catalog);
+  assert.equal(published.naglowek, "Inny nagłówek");
+  assert.deepEqual(published.kafle.map((tile) => tile.kod), ["urodziny"]);
+  assert.ok(homeProblems({ naglowek: "<script>alert(1)</script>", podtytul: "Podtytuł", baner: "/img/hero.webp" }).length > 0);
+  assert.ok(homeProblems({ naglowek: "Nagłówek", podtytul: "Podtytuł", baner: "https://evil.example/a.webp" }).length > 0);
+  assert.deepEqual(homeProblems({ naglowek: "Nagłówek", podtytul: "Podtytuł strony", baner: "/img/hero.webp" }), []);
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

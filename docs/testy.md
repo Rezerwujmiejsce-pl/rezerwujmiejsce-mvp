@@ -16,11 +16,11 @@ Przy włączonym Dockerze i `supabase start`:
 npm run test:security
 ```
 
-To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql`, `supabase/tests/zapytania_rls.test.sql` i `supabase/tests/mapa_rls.test.sql`.
+To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql`, `supabase/tests/zapytania_rls.test.sql`, `supabase/tests/mapa_rls.test.sql` i `supabase/tests/strona_rls.test.sql`.
 
 `zapytania_rls.test.sql` sprawdza, że gość nie czyta i nie wstawia wiersza, szkic i obca sala odpadają, pojemność i data są pilnowane, szacunek to cena za osobę razy liczba gości, a konto z tym samym e-mailem nie widzi zapytania gościa. Właściciel widzi tylko swój lokal i może odrzucić. Nie ustawia statusu „zaakceptowane”.
 
-Na tym komputerze nie ma `supabase start` (brak Dockera). Pliki SQL poszły na lokalnym Postgres 16, po trzech migracjach, z dopisanym na czas testu schematem `auth` (`uid`, `role`, `users`) i tabelą `storage.objects`. To nie jest projekt DEV ani obraz Supabase. Wynik zapytań: 24 zaliczone. Dotychczasowe role: 57 zaliczone. `mapa_rls.test.sql` sprawdza, że współrzędne szkicu nie wchodzą do `szukaj_lokali`, a po publikacji widać szerokość z migawki, nie z późniejszej edycji.
+Na tym komputerze nie ma `supabase start` (brak Dockera). Pliki SQL poszły na lokalnym Postgres 16, z dopisanym na czas testu schematem `auth` (`uid`, `role`, `users`) i tabelą `storage.objects`. To nie jest projekt DEV ani obraz Supabase. Wynik: role 57, zapytania 31, mapa 6, strona główna 13. `strona_rls.test.sql` sprawdza, że gość i właściciel nie zapisują strony, szkic nie jest publiczny, a późniejszy szkic nie podmienia już opublikowanego tekstu.
 
 Podkład mapy to publiczna instancja OpenFreeMap (bez klucza, atrybucja przez MapLibre). To nie jest usługa z umową SLA i nie zakładamy, że ten sam układ wystarczy na produkcję. Szczegóły: [mapa.md](mapa.md).
 

@@ -1,7 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { inquiryProblems, isoDateInTimeZone } from "../../../../../domain/inquiry";
+import { inquiryProblems, inquirySuccessPath, isoDateInTimeZone } from "../../../../../domain/inquiry";
 import { parsePositiveInt, safeNextPath } from "../../../../../domain/rules";
 import { fromSupabaseError } from "../../../../../data/result";
 import { readPublicEnv } from "../../../../../data/setup";
@@ -45,7 +46,7 @@ export async function sendInquiry(formData: FormData) {
   if (!/^[0-9a-f-]{36}$/i.test(venueId)) problems.unshift("Brak lokalu.");
   if (problems.length) fail(back, problems[0]);
   const supabase = await createClient();
-  const { error } = await supabase.rpc("wyslij_zapytanie", {
+  const { data, error } = await supabase.rpc("wyslij_zapytanie", {
     p_lokal: venueId,
     p_sala: roomId,
     p_okazja: occasion || null,
@@ -57,6 +58,8 @@ export async function sendInquiry(formData: FormData) {
     p_email: email.trim(),
     p_wiadomosc: message.trim() || null,
   });
-  if (error) fail(back, fromSupabaseError(error).detail);
-  redirect(`${back}/wyslane?zapis=1`);
+  if (error || typeof data !== "string") fail(back, error ? fromSupabaseError(error).detail : "Nie udało się zapisać zapytania.");
+  const jar = await cookies();
+  jar.set("rm_zapis", data, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 600 });
+  redirect(inquirySuccessPath(back));
 }

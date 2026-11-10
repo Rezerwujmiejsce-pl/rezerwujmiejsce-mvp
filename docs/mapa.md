@@ -6,7 +6,7 @@ Pinezka powstaje tylko wtedy, gdy opublikowana migawka ma obie wartości `lat` i
 
 Adres nie jest zamieniany na pinezkę. Nie ma geokodera i nie ma hurtowego odpytywania żadnej usługi. Właściciel wpisuje obie liczby albo zostawia obie puste.
 
-Cena na pinezce to „od” plus najniższa opublikowana kwota sali. Gdy jej nie ma, pinezka mówi „na zapytanie” albo „bez ceny”. Nie pokazujemy kwot z makiety.
+Cena na pinezce jest tą samą linią co na karcie, razem z jednostką: za osobę, za salę, za godzinę, za dzień albo za pakiet. Samo „od 100 zł” bez jednostki nie wraca. Gdy kwoty nie ma, pinezka mówi „na zapytanie”. Nie pokazujemy kwot z makiety.
 
 Podkład to styl `https://tiles.openfreemap.org/styles/liberty` (OpenFreeMap, dane OpenStreetMap, schemat OpenMapTiles). Publiczna instancja nie wymaga klucza. Warunki z 14 października 2026 pozwalają na użycie, w tym komercyjne, „jak jest”, bez SLA. Atrybucję dokłada MapLibre. Kafelki ładują się dopiero, gdy mapa jest otwarta. Na wąskim ekranie startuje lista, a przycisk „Mapa” / „Lista” przełącza widok. W Figmie nie ma ramki otwartej mapy na telefonie, więc to nie jest odtworzenie takiej ramki.
 

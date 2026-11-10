@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(24);
+select plan(31);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
@@ -343,6 +343,60 @@ select throws_ok(
   'Zapytanie zmienia tylko serwerowa funkcja wysyłki albo odpowiedzi.',
   'bez flagi funkcji nie da się wstawić wiersza'
 );
+
+alter table fx add column klient uuid;
+update fx set klient = (
+  select id from public.zapytania where klient_id = '44444444-4444-4444-8444-444444444444'
+);
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'anon', true);
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+
+select is(
+  (select public.czy_swieze_zapytanie(gosc) from fx),
+  true,
+  'świeży zapis gościa da się potwierdzić bez czytania treści'
+);
+
+select is(
+  (select public.czy_swieze_zapytanie(klient) from fx),
+  false,
+  'zapytanie z cudzego konta nie potwierdza się gościowi'
+);
+
+select is(
+  public.czy_swieze_zapytanie('99999999-9999-4999-8999-999999999999'),
+  false,
+  'wylosowany identyfikator nie jest sukcesem'
+);
+
+reset role;
+select set_config('app.allow_inquiry_change', '1', true);
+update public.zapytania set utworzono = now() - interval '1 day' where id = (select gosc from fx);
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'anon', true);
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role anon;
+
+select is(
+  (select public.czy_swieze_zapytanie(gosc) from fx),
+  false,
+  'stary zapis nie udaje świeżego sukcesu'
+);
+
+select ok(
+  strpos(
+    pg_get_functiondef('private.wyslij_zapytanie(uuid,uuid,text,date,time,integer,text,text,text,text)'::regprocedure),
+    'pg_advisory_xact_lock'
+  ) > 0,
+  'limit godzinny jest liczony pod blokadą transakcji'
+);
+
+select has_index('public', 'zapytania', 'zapytania_sala', 'klucz obcy sali ma indeks');
+select has_index('public', 'zapytania', 'zapytania_okazja', 'klucz obcy okazji ma indeks');
 
 select * from finish();
 rollback;
