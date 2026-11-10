@@ -1,6 +1,8 @@
 -- Szkic i publikacja tekstu strony głównej oraz kolejności kafli okazji.
+-- Na DEV ta wersja jest już wgrana jako 20261110092234 / strona_glowna.
+-- Nie wgrywać drugi raz. Starszego prefiksu 20261110091752 nie dopisywać przez migration repair.
 -- Pusta tabela znaczy: strona zostaje przy dotychczasowym tekście w aplikacji.
--- Nie wstawiamy tu przykładowej treści. Nie wgrywać na DEV z tego środowiska.
+-- Nie wstawiamy tu przykładowej treści.
 
 create table public.strona_szkic (
   id smallint primary key default 1,

@@ -1,7 +1,7 @@
 -- Potwierdzenie zapisu zapytania bez identyfikatora w adresie.
--- Wymaga wcześniejszej migracji 20261110091341_zapytania_o_termin, już wgranej na DEV.
--- Nie wgrywać na DEV razem ze starymi plikami i nie powtarzać po pierwszym wdrożeniu.
--- Nie stosować zdalnie z tego środowiska.
+-- Na DEV ta wersja jest już wgrana jako 20261110092221 / potwierdzenie_zapytania.
+-- Nie wgrywać drugi raz. Starszego prefiksu 20261110091751 nie dopisywać przez migration repair.
+-- Wymaga 20261110091341_zapytania_o_termin.
 
 create or replace function private.czy_swieze_zapytanie(p_id uuid)
 returns boolean

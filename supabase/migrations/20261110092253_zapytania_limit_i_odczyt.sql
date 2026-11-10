@@ -1,5 +1,6 @@
--- Dopięcie zapytań po wdrożeniu 20261110091341. Nie zmienia tamtego pliku
--- i nie wolno go wgrywać drugi raz. Tej migracji na DEV jeszcze nie ma.
+-- Dopięcie zapytań po wdrożeniu 20261110091341. Nie zmienia tamtego pliku.
+-- Na DEV ta wersja jest już wgrana jako 20261110092253 / zapytania_limit_i_odczyt.
+-- Nie wgrywać drugi raz. Starszego prefiksu 20261110091756 nie dopisywać przez migration repair.
 --
 -- 1. Licznik 8/h na adres i 40/h na lokal jest liczony pod blokadą transakcji,
 --    żeby dwa równoległe wywołania nie przeszły razem progu. To nie jest
