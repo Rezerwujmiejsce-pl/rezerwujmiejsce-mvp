@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
 import { HOME_DEFAULTS, homeProblems, publicHome } from "../src/domain/home";
+import { holdsBlock, intervalsOverlap, periodConflicts, saturdaysInMonth, warsawLocalToUtc } from "../src/domain/calendar";
 import { acceptsInquiries, internalVenueTitle, pickOwnedVenue, plainTextProblem } from "../src/domain/venues";
 import { estimateFromRoom, inquiryProblems, inquirySuccessCopy, inquirySuccessPath, shortAccountLabel } from "../src/domain/inquiry";
 import { mapPoints, markerLabel, parseCoordinatePair, pointsInBounds } from "../src/domain/map-points";
@@ -199,6 +200,33 @@ test("wiele lokali i wstrzymanie nie publikują szkicu", () => {
   assert.equal(acceptsInquiries({ published: true, archived: false, adminSuspended: false, ownerPaused: true }), false);
   assert.equal(acceptsInquiries({ published: false, archived: false, adminSuspended: false, ownerPaused: false }), false);
   assert.equal(acceptsInquiries({ published: true, archived: false, adminSuspended: true, ownerPaused: false }), false);
+});
+
+test("kalendarz: sale, Warszawa i statusy, które zajmują termin", () => {
+  assert.equal(intervalsOverlap(10, 12, 12, 14), false);
+  assert.equal(intervalsOverlap(10, 13, 12, 14), true);
+  assert.equal(
+    periodConflicts(
+      { salaId: "a", start: 10, end: 12 },
+      [{ salaId: "b", start: 10, end: 12 }],
+    ),
+    false,
+  );
+  assert.equal(
+    periodConflicts(
+      { salaId: "a", start: 10, end: 12 },
+      [{ salaId: null, start: 11, end: 15 }],
+    ),
+    true,
+  );
+  assert.equal(warsawLocalToUtc("2026-07-15", "12:00").toISOString(), "2026-07-15T10:00:00.000Z");
+  assert.equal(warsawLocalToUtc("2026-01-15", "12:00").toISOString(), "2026-01-15T11:00:00.000Z");
+  assert.deepEqual(saturdaysInMonth("2026-11-10", "2026-11-10"), ["2026-11-14", "2026-11-21", "2026-11-28"]);
+  assert.equal(holdsBlock("nowe"), true);
+  assert.equal(holdsBlock("zaakceptowane"), true);
+  assert.equal(holdsBlock("odrzucone"), false);
+  assert.equal(holdsBlock("wygasle"), false);
+  assert.equal(holdsBlock("inny_termin"), false);
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

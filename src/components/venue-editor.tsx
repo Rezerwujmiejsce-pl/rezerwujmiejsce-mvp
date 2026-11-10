@@ -85,6 +85,7 @@ export function VenueEditor({
             <button className="btn" type="submit">Wyślij do weryfikacji</button>
           </form>
           <Link className="btn ghost" href={`/panel/${venue.id}/zapytania`}>Zapytania tego lokalu</Link>
+          <Link className="btn ghost" href={`/panel/${venue.id}/kalendarz`}>Kalendarz dostępności</Link>
           {canWithdraw ? (
             <form action={withdrawVenue}>
               <input type="hidden" name="id" value={venue.id} />

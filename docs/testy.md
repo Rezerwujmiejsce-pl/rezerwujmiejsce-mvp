@@ -16,7 +16,9 @@ Przy włączonym Dockerze i `supabase start`:
 npm run test:security
 ```
 
-To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql`, `supabase/tests/zapytania_rls.test.sql`, `supabase/tests/mapa_rls.test.sql` i `supabase/tests/strona_rls.test.sql`.
+To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql`, `supabase/tests/zapytania_rls.test.sql`, `supabase/tests/mapa_rls.test.sql`, `supabase/tests/strona_rls.test.sql` i `supabase/tests/kalendarz_rls.test.sql`.
+
+`kalendarz_rls.test.sql` sprawdza czas Warszawy (lato, zima, noc, luka marcowa, powtórzenie październikowe), odmowę cudzego lokalu, osobne sale, wycofanie całego zapisu wielu dni, statusy które nie blokują, brak e-maila w publicznym pasku, wstrzymanie i wycofanie. Plan 39. Na lokalnym Postgresie transakcja kończy się `rollback`.
 
 `zapytania_rls.test.sql` sprawdza, że gość nie czyta i nie wstawia wiersza, szkic i obca sala odpadają, pojemność i data są pilnowane, szacunek to cena za osobę razy liczba gości, a konto z tym samym e-mailem nie widzi zapytania gościa. Właściciel widzi tylko swój lokal i może odrzucić. Nie ustawia statusu „zaakceptowane”.
 

@@ -38,6 +38,11 @@ Po `20261110092253`, każdy raz, bez `db reset` i bez przykładowych wierszy:
 | --- | --- |
 | `supabase/migrations/20261110092606_wycofaj_wlasny_lokal.sql` | właściciel zdejmuje własny lokal z serwisu, zostawia wiersz i zapytania |
 | `supabase/migrations/20261110092741_wstrzymaj_rezerwacje.sql` | właściciel wstrzymuje nowe zapytania, strona zostaje |
+| `supabase/migrations/20261110093540_kalendarz_dostepnosci.sql` | blokady wybranego lokalu i sal, publiczny pasek bez danych gościa |
+
+Kolejność po `20261110092253`: najpierw `20261110092606`, potem `20261110092741`, potem `20261110093540`. Każdy plik raz. Nie robić `db reset` i nie dopisywać przykładowych lokali. Kalendarz nie był wgrywany na DEV z tego środowiska. Test lokalny szedł na `rezerwuj_test` i kończył się `rollback`.
+
+Pasek publiczny zwraca tylko `dzien` i `stan` (`wolne`, `zajete`, `wstrzymane`). Zapytanie `nowe` zajmuje wskazaną salę do końca godzin lokalu albo na dwie godziny, gdy zamknięcia nie ma. Nie znika samo po 24 godzinach. `odrzucone`, `wygasle` i `inny_termin` nie blokują. `zaakceptowane` znaczy ręcznie przyjęty termin, nie opłaconą rezerwację; ta migracja takiego statusu nie ustawia. Sala pusta w blokadzie oznacza cały lokal. Zajęta jedna sala nie oznacza całego dnia jako zajętego, dopóki inna opublikowana sala jest wolna. Właściciel nie zdejmie zapytania oznaczeniem „wolne”.
 
 Szczegóły: [zapytania.md](zapytania.md), [strona.md](strona.md). Brak wiersza w `strona_publikacja` jest stanem poprawnym.
 

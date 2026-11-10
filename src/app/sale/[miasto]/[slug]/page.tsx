@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Shell } from "../../../../components/shell";
+import { publicAvailability } from "../../../../data/supabase/calendar";
 import { getPublishedVenue } from "../../../../data/supabase/catalog";
 import { readPublicEnv, setupMessage } from "../../../../data/setup";
 
@@ -28,6 +29,15 @@ export default async function VenuePage({
   }
   if (!result.data) notFound();
   const venue = result.data;
+  const warsawToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Warsaw",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [startYear, startMonth, startDay] = warsawToday.split("-").map(Number);
+  const stripEnd = new Date(Date.UTC(startYear, startMonth - 1, startDay + 13)).toISOString().slice(0, 10);
+  const strip = await publicAvailability(venue.id, warsawToday, stripEnd);
   const place = [venue.dzielnica, venue.miasto].filter(Boolean).join(" · ");
   const mapHref = venue.lat != null && venue.lng != null
     ? `https://www.openstreetmap.org/?mlat=${venue.lat}&mlon=${venue.lng}#map=16/${venue.lat}/${venue.lng}`
@@ -84,7 +94,22 @@ export default async function VenuePage({
                 {venue.zasady.length ? (
                   <ul>{venue.zasady.map((rule) => <li key={rule}>{rule}</li>)}</ul>
                 ) : <p className="help">Właściciel nie wpisał zasad.</p>}
-                <p className="help">Nie pokazujemy kalendarza wolnych dni. Zapytanie nie jest opłaconą rezerwacją.</p>
+                {strip.ok && strip.data.length > 0 ? (
+                  <>
+                    <h3>Wolne terminy</h3>
+                    <p className="help">Najbliższe dwa tygodnie. „Zajęte” znaczy, że każda opublikowana sala ma tego dnia blokadę albo zapytanie. Jedna wolna sala zostawia dzień jako „Wolne”. Nie ma tu nazwisk, numerów zapytań ani pełnego kalendarza. Zapytanie nie jest opłaconą rezerwacją.</p>
+                    <ul className="avail">
+                      {strip.data.map((day) => (
+                        <li key={day.dzien}>
+                          <span>{day.dzien.slice(8)}.{day.dzien.slice(5, 7)}</span>
+                          <b>{day.stan === "wolne" ? "Wolne" : day.stan === "zajete" ? "Zajęte" : "Wstrzymane"}</b>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="help">Pasek wolnych terminów nie jest jeszcze dostępny. Zapytanie nie jest opłaconą rezerwacją.</p>
+                )}
               </section>
             </div>
             <aside>
