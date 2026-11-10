@@ -45,6 +45,10 @@ table.plain th,table.plain td{text-align:left;padding:10px 8px;border-bottom:1px
 .stepsbar li.wait i{background:#fff;color:var(--ink);border:1px solid var(--ink)}
 .bk.muted{background:var(--soft)}
 .account-photo{width:100%;max-width:360px;height:180px;object-fit:cover;border-radius:12px}
+.res.nomap .map{display:none}
+.map .map-canvas{position:absolute;inset:0}
+.map .maplibregl-map{font-family:inherit}
+.map .maplibregl-ctrl-attrib{font-size:11px;max-width:calc(100% - 24px)}
 @media (max-width:760px){
   .bk .ph{width:88px;height:72px}
 }

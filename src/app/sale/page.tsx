@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { ResultsBrowser } from "../../components/results-browser";
 import { Shell } from "../../components/shell";
-import { VenueGrid } from "../../components/venue-grid";
 import { parsePositiveInt, zlotyToGrosze } from "../../domain/rules";
 import { listAmenities, listOccasions, searchVenues, type SearchFilters } from "../../data/supabase/catalog";
 import { readPublicEnv, setupMessage } from "../../data/setup";
@@ -39,8 +39,8 @@ export default async function ResultsPage({
     <Shell sharePath={`/sale?${query.toString()}`}>
       <div className="fbar">
         <form className="wrap" action="/sale" method="get">
-          <label className="fpill on">Miasto <input name="miasto" defaultValue={filters.miasto} placeholder="cała Polska" /></label>
-          <label className="fpill">Goście <input name="goscie" defaultValue={pick("goscie")} inputMode="numeric" /></label>
+          <label className="fpill on noarr">Miasto <input name="miasto" defaultValue={filters.miasto} placeholder="cała Polska" /></label>
+          <label className="fpill noarr">Goście <input name="goscie" defaultValue={pick("goscie")} inputMode="numeric" /></label>
           <label className="fpill">
             Okazja
             <select name="okazja" defaultValue={filters.okazja}>
@@ -48,7 +48,7 @@ export default async function ResultsPage({
               {occasions?.ok ? occasions.data.map((item) => <option key={item.kod} value={item.kod}>{item.nazwa}</option>) : null}
             </select>
           </label>
-          <label className="fpill">Cena do, zł <input name="cena" defaultValue={pick("cena")} inputMode="decimal" /></label>
+          <label className="fpill noarr">Cena do, zł <input name="cena" defaultValue={pick("cena")} inputMode="decimal" /></label>
           <label className="fpill">
             Sortuj
             <select name="sort" defaultValue={filters.sort}>
@@ -70,34 +70,19 @@ export default async function ResultsPage({
         </form>
       </div>
       <main>
-        <div className="res">
-          <div>
-            <div className="res-head">
-              <div>
-                <h1>{results?.ok ? `${results.data.length} ${results.data.length === 1 ? "lokal" : "lokali"}` : "Lokale"}</h1>
-                <p className="small muted">{filters.miasto ? filters.miasto : "Cała Polska"} · bez kalendarza wolnych terminów</p>
-              </div>
-            </div>
-            {!env.ok ? <p className="notice bad">{setupMessage(env.missing)}</p> : null}
-            {badPrice ? <p className="notice bad">Cena „do” musi być kwotą w złotych, na przykład 2400 albo 2400,50.</p> : null}
-            {results && !results.ok ? <p className="notice bad">{results.detail}</p> : null}
-            {results?.ok ? <VenueGrid hits={results.data} className="rgrid" /> : null}
+        {!env.ok ? <p className="notice bad wrap">{setupMessage(env.missing)}</p> : null}
+        {badPrice ? <p className="notice bad wrap">Cena „do” musi być kwotą w złotych, na przykład 2400 albo 2400,50.</p> : null}
+        {results && !results.ok ? <p className="notice bad wrap">{results.detail}</p> : null}
+        {results?.ok ? (
+          <ResultsBrowser
+            hits={results.data}
+            place={filters.miasto ? filters.miasto : "Cała Polska"}
+          />
+        ) : (
+          <div className="res nomap">
+            <div className="res-head"><h1>Lokale</h1></div>
           </div>
-          <aside className="map" aria-label="Lokalizacje">
-            <div className="map-note">
-              <strong>Lokalizacje</strong>
-              <p className="help">Mapa z prototypu była ilustracją. Tutaj są tylko lokale, które podały współrzędne.</p>
-              {results?.ok && results.data.filter((hit) => hit.lat != null && hit.lng != null).length === 0 ? (
-                <p>Żaden lokal w tych wynikach nie ma współrzędnych.</p>
-              ) : null}
-              {results?.ok ? results.data.filter((hit) => hit.lat != null && hit.lng != null).map((hit) => (
-                <a key={hit.id} href={`https://www.openstreetmap.org/?mlat=${hit.lat}&mlon=${hit.lng}#map=16/${hit.lat}/${hit.lng}`} target="_blank" rel="noopener noreferrer">
-                  {hit.nazwa}
-                </a>
-              )) : null}
-            </div>
-          </aside>
-        </div>
+        )}
       </main>
     </Shell>
   );

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
 import { estimateFromRoom, inquiryProblems, shortAccountLabel } from "../src/domain/inquiry";
+import { mapPoints, markerLabel, parseCoordinatePair, pointsInBounds } from "../src/domain/map-points";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
   formatZloty,
@@ -113,6 +114,28 @@ test("szacunek zapytania nie wymyśla pakietu ani zadatku", () => {
   assert.ok(problems.some((item) => /gości/.test(item)));
   assert.ok(problems.some((item) => /18 miesięcy/.test(item)));
   assert.equal(shortAccountLabel("Jan Nowak", null), "Jan N.");
+});
+
+test("pinezki biorą tylko prawdziwe współrzędne i cenę z cennika", () => {
+  assert.throws(() => parseCoordinatePair("51.9", ""), /obie/);
+  assert.deepEqual(parseCoordinatePair("", ""), { lat: null, lng: null });
+  assert.deepEqual(parseCoordinatePair("51,93", "15.50"), { lat: 51.93, lng: 15.5 });
+  assert.throws(() => parseCoordinatePair("120", "15"), /90/);
+  const hits = [
+    { id: "a", lat: 51.93, lng: 15.5, cenaMinGrosze: 240000, cenaNaZapytanie: false, href: "/sale/a", nazwa: "A" },
+    { id: "b", lat: null, lng: 15.5, cenaMinGrosze: 100, cenaNaZapytanie: false, href: "/sale/b", nazwa: "B" },
+    { id: "c", lat: 52, lng: 16, cenaMinGrosze: null, cenaNaZapytanie: true, href: "/sale/c", nazwa: "C" },
+    { id: "d", lat: 91, lng: 15, cenaMinGrosze: 100, cenaNaZapytanie: false, href: "/sale/d", nazwa: "D" },
+  ];
+  const points = mapPoints(hits);
+  assert.deepEqual(points.map((point) => point.id), ["a", "c"]);
+  assert.equal(points[0]?.priced, true);
+  assert.match(points[0]?.label ?? "", /2\s?400 zł/);
+  assert.equal(points[1]?.label, "na zapytanie");
+  assert.equal(markerLabel(null, false).text, "bez ceny");
+  const inside = pointsInBounds(points, { south: 51, west: 15, north: 52, east: 16 });
+  assert.deepEqual(inside.map((point) => point.id), ["a", "c"]);
+  assert.deepEqual(pointsInBounds(points, { south: 60, west: 15, north: 52, east: 16 }), []);
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

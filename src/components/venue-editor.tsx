@@ -98,8 +98,9 @@ export function VenueEditor({
           <label>Kod<input name="kod" defaultValue={venue.kod} /></label>
           <label>Miasto<input name="miasto" defaultValue={venue.miasto} /></label>
           <label>Dzielnica<input name="dzielnica" defaultValue={venue.dzielnica} /></label>
-          <label>Szerokość geogr.<input name="lat" defaultValue={venue.lat ?? ""} /></label>
-          <label>Długość geogr.<input name="lng" defaultValue={venue.lng ?? ""} /></label>
+          <label>Szerokość geogr.<input name="lat" inputMode="decimal" defaultValue={venue.lat ?? ""} /></label>
+          <label>Długość geogr.<input name="lng" inputMode="decimal" defaultValue={venue.lng ?? ""} /></label>
+          <p className="help wide">Obie liczby albo obie puste. Adres sam nie stawia pinezki — nie ma geokodera. Na mapie widać je dopiero po publikacji.</p>
           <label>Telefon na stronie<input name="telefon_publiczny" defaultValue={venue.telefonPubliczny} /></label>
           <label>Końcówka adresu<input name="slug" defaultValue={venue.slug} /></label>
           <label>Godziny od<input name="godziny_od" type="time" defaultValue={venue.godzinyOd} /></label>

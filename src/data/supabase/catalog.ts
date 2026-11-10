@@ -30,6 +30,8 @@ export type SearchHit = {
   photo: string | null;
   lat: number | null;
   lng: number | null;
+  cenaMinGrosze: number | null;
+  cenaNaZapytanie: boolean;
   przyklad: boolean;
 };
 
@@ -155,6 +157,8 @@ export async function searchVenues(filters: SearchFilters): Promise<DataResult<S
       photo: row.zdjecie_sciezka ? `/media/${row.zdjecie_sciezka}` : null,
       lat: row.lat == null ? null : Number(row.lat),
       lng: row.lng == null ? null : Number(row.lng),
+      cenaMinGrosze: row.cena_min_grosze == null ? null : Number(row.cena_min_grosze),
+      cenaNaZapytanie: Boolean(row.cena_na_zapytanie),
       przyklad: Boolean(row.czy_przyklad),
     }));
     return { ok: true, data: hits };

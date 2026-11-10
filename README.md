@@ -2,7 +2,7 @@
 
 Właściciel zakłada konto, opisuje lokal (sale, zdjęcia, udogodnienia, okazje, cenę) i wysyła go do sprawdzenia. Administrator publikuje. Gość bez konta wyszukuje tylko opublikowane lokale, otwiera stronę lokalu i może zapytać o termin. Zalogowany klient widzi na koncie tylko zapytania wysłane z tego konta.
 
-To nie jest jeszcze rezerwacja. Nie ma płatności, zadatku, SMS-ów, kalendarza wolnych terminów, opinii ani porównywania. Zapis zapytania nie wysyła wiadomości.
+To nie jest jeszcze rezerwacja. Nie ma płatności, zadatku, SMS-ów, kalendarza wolnych terminów, opinii ani porównywania. Zapis zapytania nie wysyła wiadomości. Mapa na wynikach pokazuje tylko opublikowane współrzędne; opis jest w [docs/mapa.md](docs/mapa.md).
 
 ## Dla Wojtka, bez linii poleceń
 

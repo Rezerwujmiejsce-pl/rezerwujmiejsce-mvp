@@ -52,7 +52,7 @@ Zapytanie o termin jest zapisem w portalu. Gość może je wysłać bez konta i 
 
 ## Czego świadomie nie ma na ekranach
 
-Wyszukiwanie zdaniem, „wolne sob 14.11”, zadatek, płatność, potwierdzenie terminu, czat, serduszka ulubionych, sortowanie po najbliższym terminie. Mapa z prototypu była rysunkiem. Zamiast niej są linki do OpenStreetMap, gdy lokal ma współrzędne. Makieta konta ma karty zadatku i potwierdzonej rezerwacji — to dane przykładowe, nie ten etap. Nie ma też osobnych ekranów „Ulubione” i „Moje dane”. Wariant mobile konta nie jest w Figmie; wąski ekran składa kartę z istniejących klas.
+Wyszukiwanie zdaniem, „wolne sob 14.11”, zadatek, płatność, potwierdzenie terminu, czat, serduszka ulubionych, sortowanie po najbliższym terminie. Makieta mapy na wynikach jest ilustracją: jej pinezki mają x/y ramki, nie współrzędne, i nie wolno ich wstawiać jako danych. Prawdziwa mapa czyta `lat`/`lng` z opublikowanej migawki. Adres sam nie geokoduje pinezki. Makieta konta ma karty zadatku i potwierdzonej rezerwacji — to dane przykładowe, nie ten etap. Nie ma też osobnych ekranów „Ulubione” i „Moje dane”. Wariant mobile konta i otwartej mapy na telefonie nie jest w Figmie; wąski ekran używa istniejących klas i przycisku „Mapa”.
 
 ## Pytania bez odpowiedzi
 

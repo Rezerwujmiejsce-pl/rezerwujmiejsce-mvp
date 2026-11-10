@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { parseCoordinatePair } from "../../domain/map-points";
 import { extensionFor, sniffImage, zlotyToGrosze, type ImageMime } from "../../domain/rules";
 import { fromSupabaseError } from "../../data/result";
 import { readPublicEnv } from "../../data/setup";
@@ -26,14 +27,6 @@ function text(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
 }
 
-function coord(value: string): number | null {
-  if (!value) return null;
-  const number = Number(value.replace(",", "."));
-  if (!Number.isFinite(number)) {
-    throw new Error("Współrzędne zapisz jako liczbę, na przykład 51.935621, albo zostaw puste.");
-  }
-  return number;
-}
 
 export async function createVenue(formData: FormData) {
   const supabase = await db();
@@ -53,8 +46,9 @@ export async function saveVenue(formData: FormData) {
   let lat: number | null;
   let lng: number | null;
   try {
-    lat = coord(text(formData, "lat"));
-    lng = coord(text(formData, "lng"));
+    const pair = parseCoordinatePair(text(formData, "lat"), text(formData, "lng"));
+    lat = pair.lat;
+    lng = pair.lng;
   } catch (error) {
     back(id, error instanceof Error ? error.message : "Złe współrzędne.");
   }
