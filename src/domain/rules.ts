@@ -51,7 +51,7 @@ export function statusLabel(
     case "rejected":
       return "Odrzucony";
     case "archived":
-      return "Ukryty";
+      return "Wycofany z serwisu";
   }
 }
 

@@ -10,6 +10,6 @@ Lista lokali na stronie głównej zostaje wyszukiwaniem opublikowanych miejsc w 
 
 ## Wdrożenie
 
-Plik: `supabase/migrations/20261110091752_strona_glowna.sql`.
+Plik: `supabase/migrations/20261110092234_strona_glowna.sql`. Jest już na DEV. Nie wgrywać drugi raz.
 
-Wgrać po migracjach, które już są na DEV, albo razem z kolejką nowych plików, raz. Nie resetować DEV. Nie wstawiać ręcznie wiersza przykładowego. Brak wiersza w `strona_publikacja` jest poprawnym stanem: strona używa dotychczasowego tekstu. Jeśli tabeli jeszcze nie ma, strona też zostaje przy tym tekście i nie pokazuje błędu gościowi.
+Nie resetować DEV. Nie wstawiać ręcznie wiersza przykładowego. Brak wiersza w `strona_publikacja` jest poprawnym stanem: strona używa dotychczasowego tekstu. Jeśli tabeli jeszcze nie ma, strona też zostaje przy tym tekście i nie pokazuje błędu gościowi.

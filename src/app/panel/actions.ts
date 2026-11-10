@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { parseCoordinatePair } from "../../domain/map-points";
+import { plainTextProblem } from "../../domain/venues";
 import { extensionFor, sniffImage, zlotyToGrosze, type ImageMime } from "../../domain/rules";
 import { fromSupabaseError } from "../../data/result";
 import { readPublicEnv } from "../../data/setup";
@@ -52,6 +53,21 @@ export async function saveVenue(formData: FormData) {
   } catch (error) {
     back(id, error instanceof Error ? error.message : "Złe współrzędne.");
   }
+  const nazwa = text(formData, "nazwa");
+  const opis = String(formData.get("opis") ?? "");
+  const adres = text(formData, "adres");
+  const dzielnica = text(formData, "dzielnica");
+  const telefon = text(formData, "telefon_publiczny");
+  const notatka = text(formData, "notatka");
+  const textError = [
+    plainTextProblem("Nazwa", nazwa, 120),
+    plainTextProblem("Opis", opis, 8000),
+    plainTextProblem("Adres", adres, 200),
+    plainTextProblem("Dzielnica", dzielnica, 120),
+    plainTextProblem("Telefon", telefon, 40),
+    plainTextProblem("Notatka", notatka, 4000),
+  ].find(Boolean);
+  if (textError) back(id, textError);
   const zasady = String(formData.get("zasady") ?? "")
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -60,17 +76,17 @@ export async function saveVenue(formData: FormData) {
   const { error } = await supabase
     .from("lokale")
     .update({
-      nazwa: text(formData, "nazwa"),
+      nazwa,
       slug: text(formData, "slug"),
       typ: text(formData, "typ") || "inne",
-      opis: String(formData.get("opis") ?? ""),
-      adres: text(formData, "adres"),
+      opis,
+      adres,
       kod: text(formData, "kod"),
       miasto: text(formData, "miasto"),
-      dzielnica: text(formData, "dzielnica"),
+      dzielnica,
       lat,
       lng,
-      telefon_publiczny: text(formData, "telefon_publiczny") || null,
+      telefon_publiczny: telefon || null,
       zasady,
       godziny_od: text(formData, "godziny_od") || null,
       godziny_do: text(formData, "godziny_do") || null,
@@ -84,7 +100,7 @@ export async function saveVenue(formData: FormData) {
     .update({
       email_kontaktowy: text(formData, "email_kontaktowy") || null,
       telefon_wewnetrzny: text(formData, "telefon_wewnetrzny") || null,
-      notatka: text(formData, "notatka") || null,
+      notatka: notatka || null,
     })
     .eq("lokal_id", id);
   if (privateError) back(id, fromSupabaseError(privateError).detail);
@@ -112,7 +128,7 @@ export async function saveVenue(formData: FormData) {
     );
     if (insertAmenities) back(id, fromSupabaseError(insertAmenities).detail);
   }
-  ok(id);
+  ok(id, "Wersja robocza zapisana. Nie została opublikowana.");
 }
 
 export async function saveRoom(formData: FormData) {
@@ -138,10 +154,14 @@ export async function saveRoom(formData: FormData) {
     back(id, "Podaj kwotę albo zaznacz cenę na zapytanie.");
   }
 
+  const roomName = text(formData, "nazwa");
+  const roomNote = text(formData, "opis");
+  const roomText = plainTextProblem("Nazwa sali", roomName, 120) || plainTextProblem("Opis sali", roomNote, 500);
+  if (roomText) back(id, roomText);
   const payload = {
     lokal_id: id,
-    nazwa: text(formData, "nazwa"),
-    opis_krotki: text(formData, "opis"),
+    nazwa: roomName,
+    opis_krotki: roomNote,
     pojemnosc_max: capacity,
     jednostka: text(formData, "jednostka") || "osoby",
     metraz: area,
@@ -271,6 +291,37 @@ export async function withdrawVenue(formData: FormData) {
   const { error } = await supabase.rpc("cofnij_zgloszenie", { p_lokal: id });
   if (error) back(id, fromSupabaseError(error).detail);
   ok(id, "Zgłoszenie cofnięte.");
+}
+
+function confirmed(formData: FormData, id: string, message: string) {
+  if (formData.get("potwierdz") !== "tak") back(id, message);
+}
+
+export async function pauseBookings(formData: FormData) {
+  const id = text(formData, "id");
+  confirmed(formData, id, "Zaznacz potwierdzenie, żeby wstrzymać przyjmowanie zapytań.");
+  const supabase = await db();
+  const { error } = await supabase.rpc("wstrzymaj_rezerwacje", { p_lokal: id });
+  if (error) back(id, fromSupabaseError(error).detail);
+  ok(id, "Rezerwacje wstrzymane. Strona lokalu zostaje widoczna, nowe zapytanie nie przejdzie. Godziny bez zmian.");
+}
+
+export async function resumeBookings(formData: FormData) {
+  const id = text(formData, "id");
+  confirmed(formData, id, "Zaznacz potwierdzenie, żeby wznowić przyjmowanie zapytań.");
+  const supabase = await db();
+  const { error } = await supabase.rpc("wznow_rezerwacje", { p_lokal: id });
+  if (error) back(id, fromSupabaseError(error).detail);
+  ok(id, "Przyjmowanie zapytań wznowione. To nie publikuje szkicu i nie zdejmuje zawieszenia administratora.");
+}
+
+export async function archiveOwnVenue(formData: FormData) {
+  const id = text(formData, "id");
+  confirmed(formData, id, "Zaznacz potwierdzenie, żeby wycofać lokal z serwisu.");
+  const supabase = await db();
+  const { error } = await supabase.rpc("wycofaj_wlasny_lokal", { p_lokal: id });
+  if (error) back(id, fromSupabaseError(error).detail);
+  ok(id, "Lokal wycofany z serwisu. Wiersz i zapytania zostały. To nie jest wstrzymanie rezerwacji.");
 }
 
 export async function addMember(formData: FormData) {

@@ -19,21 +19,25 @@ Starych prefiksów `20261107113350` i `20261107122202` na DEV nie ma. Nie dopisu
 
 Ostrzeżenie advisora `auth_leaked_password_protection` zostało bez zmian. To ustawienie Auth, nie ta migracja.
 
-## Nowa, jeszcze nie wgrana
+## Już na DEV, nie powtarzać
 
-Na DEV jest już trzecia migracja. Nie wgrywać jej drugi raz i nie dopisywać starego numeru `20261110084306` przez `migration repair`.
+Nie dopisywać starych numerów `20261110084306`, `20261110091751`, `20261110091752` ani `20261110091756` przez `migration repair`.
 
 | version na DEV | name | plik |
 | --- | --- | --- |
 | `20261110091341` | `zapytania_o_termin` | `supabase/migrations/20261110091341_zapytania_o_termin.sql` |
+| `20261110092221` | `potwierdzenie_zapytania` | `supabase/migrations/20261110092221_potwierdzenie_zapytania.sql` |
+| `20261110092234` | `strona_glowna` | `supabase/migrations/20261110092234_strona_glowna.sql` |
+| `20261110092253` | `zapytania_limit_i_odczyt` | `supabase/migrations/20261110092253_zapytania_limit_i_odczyt.sql` |
 
-Jeszcze nie wgrane. Po kolei, każdy raz, bez `db reset` i bez przykładowych wierszy:
+## Jeszcze nie wgrane
 
-| plik | po czym |
+Po `20261110092253`, każdy raz, bez `db reset` i bez przykładowych wierszy:
+
+| plik | po co |
 | --- | --- |
-| `supabase/migrations/20261110091751_potwierdzenie_zapytania.sql` | `20261110091341` |
-| `supabase/migrations/20261110091752_strona_glowna.sql` | `20261110091341`; nie zależy od potwierdzenia |
-| `supabase/migrations/20261110091756_zapytania_limit_i_odczyt.sql` | `20261110091341`; podmienia tylko ciało `private.wyslij_zapytanie` i politykę odczytu |
+| `supabase/migrations/20261110092606_wycofaj_wlasny_lokal.sql` | właściciel zdejmuje własny lokal z serwisu, zostawia wiersz i zapytania |
+| `supabase/migrations/20261110092741_wstrzymaj_rezerwacje.sql` | właściciel wstrzymuje nowe zapytania, strona zostaje |
 
 Szczegóły: [zapytania.md](zapytania.md), [strona.md](strona.md). Brak wiersza w `strona_publikacja` jest stanem poprawnym.
 

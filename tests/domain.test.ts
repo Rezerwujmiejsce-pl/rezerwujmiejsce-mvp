@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
 import { HOME_DEFAULTS, homeProblems, publicHome } from "../src/domain/home";
+import { acceptsInquiries, internalVenueTitle, pickOwnedVenue, plainTextProblem } from "../src/domain/venues";
 import { estimateFromRoom, inquiryProblems, inquirySuccessCopy, inquirySuccessPath, shortAccountLabel } from "../src/domain/inquiry";
 import { mapPoints, markerLabel, parseCoordinatePair, pointsInBounds } from "../src/domain/map-points";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
@@ -184,6 +185,20 @@ test("szkic strony głównej nie zastępuje tekstu, dopóki nie ma publikacji", 
   assert.ok(homeProblems({ naglowek: "<script>alert(1)</script>", podtytul: "Podtytuł", baner: "/img/hero.webp" }).length > 0);
   assert.ok(homeProblems({ naglowek: "Nagłówek", podtytul: "Podtytuł", baner: "https://evil.example/a.webp" }).length > 0);
   assert.deepEqual(homeProblems({ naglowek: "Nagłówek", podtytul: "Podtytuł strony", baner: "/img/hero.webp" }), []);
+});
+
+test("wiele lokali i wstrzymanie nie publikują szkicu", () => {
+  const own = [{ id: "a" }, { id: "b" }];
+  assert.equal(pickOwnedVenue(own, "b")?.id, "b");
+  assert.equal(pickOwnedVenue(own, "c"), null);
+  assert.equal(internalVenueTitle("  "), "Szkic bez nazwy");
+  assert.equal(internalVenueTitle("Sala"), "Sala");
+  assert.equal(plainTextProblem("Nazwa", "<b>", 120), "Nazwa nie może zawierać znaczników HTML.");
+  assert.equal(plainTextProblem("Nazwa", "", 120), null);
+  assert.equal(acceptsInquiries({ published: true, archived: false, adminSuspended: false, ownerPaused: false }), true);
+  assert.equal(acceptsInquiries({ published: true, archived: false, adminSuspended: false, ownerPaused: true }), false);
+  assert.equal(acceptsInquiries({ published: false, archived: false, adminSuspended: false, ownerPaused: false }), false);
+  assert.equal(acceptsInquiries({ published: true, archived: false, adminSuspended: true, ownerPaused: false }), false);
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

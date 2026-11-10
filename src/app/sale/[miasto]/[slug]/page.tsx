@@ -84,14 +84,18 @@ export default async function VenuePage({
                 {venue.zasady.length ? (
                   <ul>{venue.zasady.map((rule) => <li key={rule}>{rule}</li>)}</ul>
                 ) : <p className="help">Właściciel nie wpisał zasad.</p>}
-                <p className="help">Nie pokazujemy wolnych dni. Zapytanie nie blokuje terminu i nie jest rezerwacją.</p>
+                <p className="help">Nie pokazujemy kalendarza wolnych dni. Zapytanie nie jest opłaconą rezerwacją.</p>
               </section>
             </div>
             <aside>
               <div className="box book">
                 <div className="pr">{venue.cena}</div>
                 <p>To cena z opublikowanego cennika. Rezerwacji i zadatku jeszcze nie ma.</p>
-                <Link className="btn" href={`/sale/${miasto}/${slug}/zapytanie`}>Zapytaj o termin</Link>
+                {venue.wstrzymane ? (
+                  <p className="notice">Właściciel wstrzymał przyjmowanie rezerwacji. Strona zostaje widoczna. Nowego zapytania nie zapisujemy. To nie jest zawieszenie przez administratora.</p>
+                ) : (
+                  <Link className="btn" href={`/sale/${miasto}/${slug}/zapytanie`}>Zapytaj o termin</Link>
+                )}
                 {venue.telefon ? <a className="btn ghost" href={`tel:${venue.telefon}`}>Zadzwoń: {venue.telefon}</a> : <p className="help">Brak publicznego telefonu.</p>}
               </div>
             </aside>

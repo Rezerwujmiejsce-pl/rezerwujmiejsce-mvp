@@ -77,6 +77,7 @@ export function VenueGrid({
             <p className="loc">{[hit.dzielnica, hit.miasto].filter(Boolean).join(" · ")} · {hit.typ}</p>
             <p className="meta"><b>{hit.pojemnosc ? `do ${hit.pojemnosc} osób` : "pojemność niepodana"}</b>{hit.liczbaSal ? ` · ${hit.liczbaSal} ${hit.liczbaSal === 1 ? "sala" : "sale"}` : ""}</p>
             <p className="price">{hit.cena}</p>
+            {hit.wstrzymane ? <p className="help">Rezerwacje wstrzymane. Strona lokalu jest dostępna.</p> : null}
           </div>
         </article>
       ))}

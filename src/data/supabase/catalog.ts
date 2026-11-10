@@ -33,6 +33,7 @@ export type SearchHit = {
   cenaMinGrosze: number | null;
   cenaNaZapytanie: boolean;
   przyklad: boolean;
+  wstrzymane: boolean;
 };
 
 export type Occasion = {
@@ -84,6 +85,7 @@ export type PublicVenue = {
   lat: number | null;
   lng: number | null;
   przyklad: boolean;
+  wstrzymane: boolean;
   sale: PublicRoom[];
   zdjecia: PublicPhoto[];
   udogodnienia: { kod: string; nazwa: string; szczegol: string | null }[];
@@ -170,7 +172,10 @@ export async function searchVenues(filters: SearchFilters): Promise<DataResult<S
       cenaMinGrosze: row.cena_min_grosze == null ? null : Number(row.cena_min_grosze),
       cenaNaZapytanie: Boolean(row.cena_na_zapytanie),
       przyklad: Boolean(row.czy_przyklad),
+      wstrzymane: false,
     }));
+    const flags = await pauseFlags(supabase, hits.map((hit) => hit.id));
+    for (const hit of hits) hit.wstrzymane = flags.get(hit.id) ?? false;
     return { ok: true, data: hits };
   } catch (error) {
     return fromSupabaseError(error as { message: string });
@@ -219,6 +224,7 @@ export async function getPublishedVenue(miasto: string, slug: string): Promise<D
       lat: lokal.lat == null ? null : Number(lokal.lat),
       lng: lokal.lng == null ? null : Number(lokal.lng),
       przyklad: Boolean(lokal.czy_przyklad),
+      wstrzymane: false,
       sale: (payload.sale ?? []).map((room) => ({
         id: String(room.id),
         nazwa: String(room.nazwa),
@@ -243,8 +249,25 @@ export async function getPublishedVenue(miasto: string, slug: string): Promise<D
       udogodnienia: payload.udogodnienia ?? [],
       okazje: payload.okazje ?? [],
     };
+    const flags = await pauseFlags(supabase, [venue.id]);
+    venue.wstrzymane = flags.get(venue.id) ?? false;
     return { ok: true, data: venue };
   } catch (error) {
     return fromSupabaseError(error as { message: string });
   }
+}
+
+async function pauseFlags(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: string[],
+): Promise<Map<string, boolean>> {
+  const flags = new Map<string, boolean>();
+  if (ids.length === 0) return flags;
+  const { data, error } = await supabase
+    .from("dostepnosc_rezerwacji")
+    .select("lokal_id, wstrzymane")
+    .in("lokal_id", ids);
+  if (error) return flags;
+  for (const row of data ?? []) flags.set(String(row.lokal_id), Boolean(row.wstrzymane));
+  return flags;
 }

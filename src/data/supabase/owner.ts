@@ -57,6 +57,7 @@ export type OwnerVenue = {
   powod: string | null;
   dirty: boolean;
   przyklad: boolean;
+  rezerwacjeWstrzymane: boolean;
   emailKontaktowy: string;
   telefonWewnetrzny: string;
   notatka: string;
@@ -111,7 +112,7 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
   }
   try {
     const supabase = await createClient();
-    const [venueResult, privateRow, occasions, amenities, rooms, photos, members] = await Promise.all([
+    const [venueResult, privateRow, occasions, amenities, rooms, photos, members, pauseRow] = await Promise.all([
       supabase.from("lokale").select("*").eq("id", id).maybeSingle(),
       supabase.from("lokal_dane_prywatne").select("*").eq("lokal_id", id).maybeSingle(),
       supabase.from("lokal_okazje").select("kod").eq("lokal_id", id),
@@ -119,6 +120,7 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
       supabase.from("sale").select("*, ceny_sal(*)").eq("lokal_id", id).order("kolejnosc"),
       supabase.from("zdjecia").select("*").eq("lokal_id", id).order("kolejnosc"),
       supabase.rpc("lista_czlonkow", { p_lokal: id }),
+      supabase.from("dostepnosc_rezerwacji").select("wstrzymane").eq("lokal_id", id).maybeSingle(),
     ]);
     if (venueResult.error) return fromSupabaseError(venueResult.error);
     const venue = venueResult.data;
@@ -126,6 +128,8 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
     for (const result of [privateRow, occasions, amenities, rooms, photos, members]) {
       if (result.error) return fromSupabaseError(result.error);
     }
+    const pauseMissing = pauseRow.error && /42P01|PGRST205|does not exist|schema cache/i.test(`${pauseRow.error.code ?? ""} ${pauseRow.error.message ?? ""}`);
+    if (pauseRow.error && !pauseMissing) return fromSupabaseError(pauseRow.error);
 
     const mapped: OwnerVenue = {
       id: venue.id,
@@ -149,6 +153,7 @@ export async function getMine(id: string): Promise<DataResult<OwnerVenue | null>
       powod: venue.powod_odrzucenia,
       dirty: venue.ma_nieopublikowane_zmiany,
       przyklad: venue.czy_przyklad,
+      rezerwacjeWstrzymane: Boolean(pauseRow.data?.wstrzymane),
       emailKontaktowy: privateRow.data?.email_kontaktowy ?? "",
       telefonWewnetrzny: privateRow.data?.telefon_wewnetrzny ?? "",
       notatka: privateRow.data?.notatka ?? "",

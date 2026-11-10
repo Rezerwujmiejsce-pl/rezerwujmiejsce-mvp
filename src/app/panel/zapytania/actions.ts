@@ -17,5 +17,8 @@ export async function rejectInquiry(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("odrzuc_zapytanie", { p_id: id });
   if (error) fail(back, fromSupabaseError(error).detail);
-  redirect(`${back}?info=${encodeURIComponent("Zapytanie zostało odrzucone. Rezerwacji nie ma.")}`);
+  const { data } = await supabase.from("zapytania").select("lokal_id").eq("id", id).maybeSingle();
+  const venueId = data?.lokal_id ? String(data.lokal_id) : "";
+  const next = /^[0-9a-f-]{36}$/i.test(venueId) ? `/panel/${venueId}/zapytania/${id}` : back;
+  redirect(`${next}?info=${encodeURIComponent("Zapytanie zostało odrzucone. Rezerwacji nie ma.")}`);
 }

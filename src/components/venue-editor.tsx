@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   GUEST_UNITS,
   PRICE_UNITS,
@@ -6,6 +10,7 @@ import {
   statusLabel,
   submitBlockers,
 } from "../domain/rules";
+import { internalVenueTitle } from "../domain/venues";
 import type { Amenity, Occasion } from "../data/supabase/catalog";
 import type { OwnerVenue } from "../data/supabase/owner";
 import { PhotoUploader } from "./photo-uploader";
@@ -15,6 +20,8 @@ import {
   deleteRoom,
   removeMember,
   saveRoom,
+  pauseBookings,
+  resumeBookings,
   saveVenue,
   submitVenue,
   updatePhoto,
@@ -25,11 +32,23 @@ export function VenueEditor({
   venue,
   occasions,
   amenities,
+  canManageAvailability,
 }: {
   venue: OwnerVenue;
   occasions: Occasion[];
   amenities: Amenity[];
+  canManageAvailability: boolean;
 }) {
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
   const blockers = submitBlockers({
     nazwa: venue.nazwa,
     miasto: venue.miasto,
@@ -49,20 +68,23 @@ export function VenueEditor({
       <div className="subhead">
         <div>
           <p className="status-pill">{statusLabel(venue.status, venue.statusZgloszenia, venue.dirty)}</p>
-          <h1 className="disp">{venue.nazwa || "Nowy lokal"}</h1>
+          <h1 className="disp">{internalVenueTitle(venue.nazwa)}</h1>
+          {venue.rezerwacjeWstrzymane ? <p className="notice">Rezerwacje wstrzymane przez właściciela. To nie jest zawieszenie administratora ani wycofanie lokalu.</p> : null}
           {venue.przyklad ? <p className="help">To lokal przykładowy do ćwiczeń lokalnych.</p> : null}
           {venue.powod ? <p className="notice bad">Powód odrzucenia: {venue.powod}</p> : null}
           {venue.status === "published" ? (
-            <p className="help">Goście widzą ostatnią zaakceptowaną wersję. Zapis tutaj jej nie podmienia.</p>
+            <p className="help">Goście widzą ostatnią zaakceptowaną wersję. „Zapisz wersję roboczą” jej nie podmienia.</p>
           ) : (
-            <p className="help">Szkic i odrzucenie nie są widoczne w wyszukiwarce.</p>
+            <p className="help">Szkic nie jest w wyszukiwarce, na mapie ani na stronie lokalu. Zapis nie publikuje.</p>
           )}
+          {dirty ? <p className="notice" role="status">Masz niezapisane zmiany w tej wersji roboczej.</p> : null}
         </div>
         <div className="row-actions">
           <form action={submitVenue}>
             <input type="hidden" name="id" value={venue.id} />
             <button className="btn" type="submit">Wyślij do weryfikacji</button>
           </form>
+          <Link className="btn ghost" href={`/panel/${venue.id}/zapytania`}>Zapytania tego lokalu</Link>
           {canWithdraw ? (
             <form action={withdrawVenue}>
               <input type="hidden" name="id" value={venue.id} />
@@ -79,7 +101,12 @@ export function VenueEditor({
         </div>
       ) : <p className="notice ok">Możesz wysłać lokal do sprawdzenia.</p>}
 
-      <form className="form-card stack" action={saveVenue}>
+      <form
+        className="form-card stack"
+        action={saveVenue}
+        onInput={() => setDirty(true)}
+        onSubmit={() => setDirty(false)}
+      >
         <h2>Profil lokalu</h2>
         <input type="hidden" name="id" value={venue.id} />
         <div className="fields">
@@ -135,7 +162,25 @@ export function VenueEditor({
           <label>Telefon wewnętrzny<input name="telefon_wewnetrzny" defaultValue={venue.telefonWewnetrzny} /></label>
           <label className="wide">Notatka<textarea name="notatka" defaultValue={venue.notatka} /></label>
         </div>
-        <button className="btn" type="submit">Zapisz profil</button>
+        <button className="btn" type="submit">Zapisz wersję roboczą</button>
+        <p className="help wide">Możesz zapisać niepełny opis. Wysyłka do weryfikacji nadal wymaga nazwy, miasta, sali i ceny. Zapis nie tworzy zapytania i nie publikuje.</p>
+        {canManageAvailability ? (
+          <div className="wide form-card stack">
+            <h2>{venue.rezerwacjeWstrzymane ? "Wznów rezerwacje" : "Wstrzymaj lokal"}</h2>
+            <p className="help">Strona lokalu zostaje widoczna. Nowe zapytanie nie przejdzie. Godziny zostają. To nie wycofuje lokalu i nie zdejmuje decyzji administratora.</p>
+            <form action={venue.rezerwacjeWstrzymane ? resumeBookings : pauseBookings}>
+              <input type="hidden" name="id" value={venue.id} />
+              <label>
+                <input type="checkbox" name="potwierdz" value="tak" />
+                {venue.rezerwacjeWstrzymane
+                  ? " Potwierdzam wznowienie przyjmowania zapytań."
+                  : " Potwierdzam wstrzymanie nowych zapytań."}
+              </label>
+              <button className="btn ghost" type="submit">{venue.rezerwacjeWstrzymane ? "Wznów rezerwacje" : "Wstrzymaj lokal"}</button>
+            </form>
+            <p><Link href={`/panel/${venue.id}/wycofaj`}>Wycofaj lokal z serwisu</Link></p>
+          </div>
+        ) : null}
       </form>
 
       <section className="form-card">

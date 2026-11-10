@@ -35,7 +35,7 @@ export default async function OwnerInquiryPage({
   return (
     <Shell sharePath={path}>
       <main className="wrap page-pad">
-        <p><Link href="/panel/zapytania">← Zapytania</Link></p>
+        <p><Link href={`/panel/${row.lokalId}/zapytania`}>← Zapytania tego lokalu</Link></p>
         <Flash info={query.info} blad={query.blad} />
         <h1 className="disp">{row.lokalNazwa ?? "Zapytanie"}</h1>
         <p><span className="status-pill">{inquiryStatusLabel(row.status)}</span></p>

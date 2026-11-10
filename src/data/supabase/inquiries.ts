@@ -58,6 +58,12 @@ export async function getOwnInquiry(userId: string, id: string): Promise<DataRes
   return result;
 }
 
+export async function listInquiriesForVenue(venueId: string): Promise<DataResult<InquiryRecord[]>> {
+  const listed = await listVenueInquiries();
+  if (!listed.ok) return listed;
+  return { ok: true, data: listed.data.filter((row) => row.lokalId === venueId) };
+}
+
 export async function listVenueInquiries(): Promise<DataResult<InquiryRecord[]>> {
   const listed = await listInquiries({});
   if (!listed.ok) return listed;

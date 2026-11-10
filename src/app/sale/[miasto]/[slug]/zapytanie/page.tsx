@@ -48,9 +48,12 @@ export default async function InquiryPage({
             <Link href={`/sale/${miasto}/${slug}`}>{venue.nazwa}</Link> › Zapytaj o termin
           </p>
           <h1 className="disp">Zapytaj o termin</h1>
+          {venue.wstrzymane ? (
+            <p className="notice">Ten lokal chwilowo nie przyjmuje rezerwacji. Formularz nie zapisze zapytania. Strona lokalu zostaje.</p>
+          ) : null}
           <InquirySteps stage="form" />
           <Flash blad={query.blad} />
-          {venue.sale.length === 0 ? (
+          {venue.wstrzymane ? null : venue.sale.length === 0 ? (
             <p className="notice">Ten lokal nie ma opublikowanej sali, więc nie da się wysłać zapytania.</p>
           ) : (
             <div className="rz">
