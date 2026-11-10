@@ -1,0 +1,6 @@
+To są dane przykładowe do lokalnego podglądu.
+Nie są lokalem z produkcji i nie wolno ich wgrywać na projekt DEV ani na produkcję.
+Hasło konta przykładu: przyklad-lokalne
+Adres właściciela: przyklad.wlasciciel@example.test
+Adres administratora: przyklad.admin@example.test
+Na kartach jest dopisek „DANE PRZYKŁADOWE”.

@@ -1,0 +1,7 @@
+/* Uzupełnienia do arkuszy prototypu. Kolory i fonty zostają w style.css. */
+body{min-height:100vh}
+.nav.solid{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line)}
+.nav.solid .wrap{display:flex;align-items:center;justify-content:space-between;min-height:76px}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between}
+.hero .nav{position:absolute;top:0;left:0;right:0}
+.classic,.classic span,.classic input,.classic select{color:var(--ink)}

@@ -1,0 +1,59 @@
+# Testy
+
+## Reguły bez bazy
+
+```bash
+npm test
+```
+
+Sprawdza grosze, tymczasowe warunki wysłania (bez progu zdjęć i bez procentu), etykiety statusu, rozpoznawanie JPEG/PNG/WebP oraz odrzucenie adresu powrotu, który wygląda jak obca strona.
+
+## Reguły w bazie
+
+Przy włączonym Dockerze i `supabase start`:
+
+```bash
+npm run test:security
+```
+
+To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql`, `supabase/tests/zapytania_rls.test.sql`, `supabase/tests/mapa_rls.test.sql`, `supabase/tests/strona_rls.test.sql` i `supabase/tests/kalendarz_rls.test.sql`.
+
+`kalendarz_rls.test.sql` sprawdza czas Warszawy (lato, zima, noc, luka marcowa, powtórzenie październikowe), odmowę cudzego lokalu, osobne sale, wycofanie całego zapisu wielu dni, statusy które nie blokują, granicę `wygasa_o` (w tej chwili sala już nie jest trzymana, a status zostaje `nowe`), brak e-maila w publicznym pasku, wstrzymanie i wycofanie. Plan 43. `admin_lokale.test.sql` i `admin_zapytania.test.sql` sprawdzają zawieszenie, przywrócenie samej migawki oraz to, że właściciel, klient i gość nie zmieniają statusu zapytania. Na lokalnym Postgresie transakcje kończą się `rollback`.
+
+`zapytania_rls.test.sql` sprawdza, że gość nie czyta i nie wstawia wiersza, szkic i obca sala odpadają, pojemność i data są pilnowane, szacunek to cena za osobę razy liczba gości, a konto z tym samym e-mailem nie widzi zapytania gościa. Właściciel widzi tylko swój lokal i może odrzucić. Nie ustawia statusu „zaakceptowane”.
+
+Na tym komputerze nie ma `supabase start` (brak Dockera). Pliki SQL poszły na lokalnym Postgres 16, z dopisanym na czas testu schematem `auth` (`uid`, `role`, `users`) i tabelą `storage.objects`. To nie jest projekt DEV ani obraz Supabase. Wynik: role 57, zapytania 31, mapa 6, strona główna 13. `strona_rls.test.sql` sprawdza, że gość i właściciel nie zapisują strony, szkic nie jest publiczny, a późniejszy szkic nie podmienia już opublikowanego tekstu.
+
+Podkład mapy to publiczna instancja OpenFreeMap (bez klucza, atrybucja przez MapLibre). To nie jest usługa z umową SLA i nie zakładamy, że ten sam układ wystarczy na produkcję. Szczegóły: [mapa.md](mapa.md).
+
+Scenariusze:
+
+- rejestracja z metadata „admin” zostawia rolę klienta,
+- `private.bootstrap_admin` działa jako operator; w `public` tej funkcji nie ma, a zalogowany dostaje odmowę uprawnień,
+- w `public` nie ma funkcji `security definer`,
+- opublikowanego pliku zdjęcia nie da się nadpisać ani skasować; nowa wersja to nowy plik, a stara migawka zostaje do kolejnej akceptacji,
+- właściciel tworzy szkic, nie ustawia statusu „opublikowany” i nie woła akceptacji,
+- drugi właściciel nie widzi i nie zmienia cudzego szkicu,
+- gość nie czyta kopii roboczej, kontaktu wewnętrznego ani zdjęć roboczych,
+- przed akceptacją gość nie widzi lokalu w migawce,
+- administrator publikuje,
+- po edycji gość nadal widzi poprzedni opis,
+- właściciel nie gasi flagi „są nieopublikowane zmiany”,
+- wyszukiwarka po mieście nie oddaje lokalu z innego miasta,
+- obcy nie dopisuje się jako członek.
+
+W tym środowisku `supabase start` nie dochodzi do końca: kontenery widzą siebie w sieci Dockera, ale połączenie TCP między nimi kończy się timeoutem (sprawdzone osobno, nie tylko przez CLI). Dlatego ten sam plik testu puszczony był bezpośrednio na obrazie Postgres Supabase, po migracji:
+
+`psql -h 127.0.0.1 -p 54322 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/rls_security.test.sql`
+
+Wynik po dopięciu `search_path`: 57 testów, wszystkie zaliczone, transakcja wycofana. Na zwykłym komputerze, gdzie `supabase start` wstaje, tą samą treść odpala `npm run test:security`.
+
+Test `strona główna startuje sesję i katalog naraz` porównuje lokalny harmonogram: trzy zadania po 30 ms naraz kontra te same trzy po kolei. To nie jest czas podglądu Vercel ani projektu DEV. `React.cache` wokół sesji deduplikuje odczyt w jednym renderze strony; runner `node:test` nie ma tego renderu, więc tego mechanizmu tu nie mierzymy.
+
+Nie uznaję za zaliczony testu, którego tu nie dało się uruchomić: pełnego stosu Supabase (Auth + Storage + PostgREST) przez `supabase start`. Publiczny odczyt i odmowa szkicu zostały sprawdzone dodatkowo przez PostgREST podłączony do tej samej bazy z sieci hosta: gość dostaje `permission denied` na tabeli `lokale`, a `szukaj_lokali` zwraca tylko opublikowany przykład.
+
+## Czego test nie pokrywa
+
+- prawdziwego wgrania pliku przez API Storage (polityki są w migracji; test SQL nie przechodzi przez serwer plików),
+- wyglądu w przeglądarce na telefonie poza zrzutami z lokalnego serwera,
+- projektu DEV w chmurze.
