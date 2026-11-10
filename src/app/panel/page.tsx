@@ -20,10 +20,11 @@ export default async function PanelPage({
     <Shell sharePath="/panel">
       <main className="wrap page-pad">
         <h1 className="disp">Twoje lokale</h1>
+        {session.profile && session.profile.rola !== "klient" ? <p><Link href="/panel/zapytania">Zapytania o termin</Link></p> : null}
         <Flash info={params.info} blad={params.blad} />
         {!env.ok ? <p className="notice bad">{setupMessage(env.missing)}</p> : null}
         {env.ok && !session.profile ? <p>Najpierw <Link href="/logowanie?next=/panel">zaloguj się</Link>.</p> : null}
-        {session.profile?.rola === "klient" ? <p className="notice">To konto nie prowadzi jeszcze lokalu. <Link href="/rejestracja">Włącz rolę właściciela</Link>.</p> : null}
+        {session.profile?.rola === "klient" ? <p className="notice">To konto nie prowadzi jeszcze lokalu. Swoje zapytania są na <Link href="/konto">koncie</Link>. <Link href="/rejestracja">Włącz rolę właściciela</Link>, jeśli chcesz dodać lokal.</p> : null}
         {venues && !venues.ok ? <p className="notice bad">{venues.detail}</p> : null}
         {venues?.ok ? (
           <table className="plain">

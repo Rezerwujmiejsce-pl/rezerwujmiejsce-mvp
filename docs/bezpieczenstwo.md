@@ -12,12 +12,14 @@ Nowe konto dostaje rolę klienta. Właścicielem zostaje się osobnym wywołanie
 
 Supabase ostrzega, żeby nie trzymać `security definer` w schemacie wystawionym w API (`public`). Dlatego:
 
-- ciało publikacji, odrzucenia, archiwizacji, członkostwa i bootstrapu jest w `private` i ma `security definer` oraz `search_path = ''`;
+- ciało publikacji, odrzucenia lokalu, archiwizacji, członkostwa, wysyłki zapytania, odrzucenia zapytania i bootstrapu jest w `private` i ma `security definer` oraz `search_path = ''`;
 - w `public` są cienkie funkcje `security invoker` z tym samym `search_path`. One tylko wołają `private` i same nie podnoszą uprawnień;
 - `public` nie zawiera żadnej funkcji `security definer` (pilnuje tego test);
 - `bootstrap_admin` nie ma wersji w `public`.
 
 Sprawdzenie roli jest w ciele `private`, nie w tym, że ktoś „nie zna nazwy funkcji”. Właściciel, który zawoła `public.zatwierdz_lokal`, dostaje odmowę.
+
+`wyslij_zapytanie` ignoruje cenę, status i `klient_id` z przeglądarki. `klient_id` jest puste dla gościa, a dla zalogowanego równa się `auth.uid()`. Odczyt ma zalogowany właściciel lokalu, administrator albo ta sama osoba. Sam zgodny e-mail albo telefon nie otwiera wiersza. Nie ma polityki `insert` ani `update`: zapis i odrzucenie idą przez funkcję, a wyzwalacz odrzuca wstawienie bez jej flagi.
 
 Schemat `private` nie jest na liście `api.schemas` w `supabase/config.toml`.
 

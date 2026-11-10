@@ -33,7 +33,7 @@ export function fromSupabaseError(error: { message?: string; code?: string } | n
   if (code === "P0001" || code === "23514" || code === "23505" || code === "22P02") {
     return { ok: false, reason: "invalid", detail: polishDbMessage(message) };
   }
-  if (/^Podaj |^Dodaj |^Każda |^Tylko |^Nie |^Brak |^To zgłoszenie|^Administratora|^Najpierw|^Członków|^Lokal musi|^Ten adres/.test(message)) {
+  if (/^Podaj |^Dodaj |^Każda |^Tylko |^Nie |^Brak |^To zgłoszenie|^Administratora|^Najpierw|^Członków|^Lokal musi|^Ten adres|^Uzupełnij|^Data |^Wybierz|^Ta sala|^Ten lokal|^Za dużo|^Zapytanie /.test(message)) {
     return { ok: false, reason: "invalid", detail: message };
   }
   console.error("supabase", code, message);

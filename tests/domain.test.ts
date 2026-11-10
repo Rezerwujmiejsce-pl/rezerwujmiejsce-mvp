@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadPublicHome } from "../src/data/home-load";
+import { estimateFromRoom, inquiryProblems, shortAccountLabel } from "../src/domain/inquiry";
 import { mediaCacheHeaders } from "../src/domain/media-cache";
 import {
   formatZloty,
@@ -89,6 +90,29 @@ test("cache zdjęć nie jest publiczny ani po publikacji, ani dla szkicu", () =>
     assert.equal(headers.Vary, "Cookie");
     assert.equal(headers["CDN-Cache-Control"], "no-store");
   }
+});
+
+test("szacunek zapytania nie wymyśla pakietu ani zadatku", () => {
+  assert.equal(estimateFromRoom({ unit: "za_osobe", grosze: 10000, onRequest: false, guests: 4 }), 40000);
+  assert.equal(estimateFromRoom({ unit: "za_sale", grosze: 150000, onRequest: false, guests: 4 }), 150000);
+  assert.equal(estimateFromRoom({ unit: "za_godzine", grosze: 10000, onRequest: false, guests: 4 }), null);
+  assert.equal(estimateFromRoom({ unit: "za_pakiet", grosze: 640000, onRequest: false, guests: 40 }), null);
+  assert.equal(estimateFromRoom({ unit: "za_osobe", grosze: 10000, onRequest: true, guests: 4 }), null);
+  const problems = inquiryProblems({
+    guests: 50,
+    date: "2020-01-01",
+    time: "14:00",
+    name: "A",
+    phone: "12",
+    email: "zly",
+    message: "",
+    roomId: "nie-sala",
+    today: "2026-11-10",
+    roomCapacity: 40,
+  });
+  assert.ok(problems.some((item) => /gości/.test(item)));
+  assert.ok(problems.some((item) => /18 miesięcy/.test(item)));
+  assert.equal(shortAccountLabel("Jan Nowak", null), "Jan N.");
 });
 
 test("rozpoznawanie plików i bezpieczny powrót", () => {

@@ -19,6 +19,10 @@ Starych prefiksów `20261107113350` i `20261107122202` na DEV nie ma. Nie dopisu
 
 Ostrzeżenie advisora `auth_leaked_password_protection` zostało bez zmian. To ustawienie Auth, nie ta migracja.
 
+## Nowa, jeszcze nie wgrana
+
+`supabase/migrations/20261110084306_zapytania_o_termin.sql` — zapytania o termin. Nie ma jej na DEV. Nie wgrywaj jej razem z poprawką starych plików i nie powtarzaj dwóch pierwszych migracji. Po świadomym wdrożeniu tylko tego pliku historia dostanie trzeci numer. Szczegóły: [zapytania.md](zapytania.md).
+
 ## Czego nie wgrywać na DEV
 
 Nie uruchamiaj `supabase/przyklad/seed.sql`. To lokale ćwiczeniowe.

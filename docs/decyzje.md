@@ -48,10 +48,12 @@ Koszyk `zdjecia-lokali` jest prywatny. Plik nieopublikowany nie ma publicznego a
 
 Nie ma IBAN, faktur, prowizji ani zadatku. Specyfikacja je opisuje. Ten wycinek ich nie buduje.
 
+Zapytanie o termin jest zapisem w portalu. Gość może je wysłać bez konta i potem go nie odczyta. Zalogowany klient widzi tylko wiersze z `klient_id` równym jego `auth.uid()`. Stare zapytanie gościa nie dopina się po e-mailu ani telefonie. Właściciel może je odrzucić. Nie ma statusu, który tworzy rezerwację, płatność ani wpis do kalendarza.
+
 ## Czego świadomie nie ma na ekranach
 
-Wyszukiwanie zdaniem, „wolne sob 14.11”, zadatek, zapytanie o termin, czat, serduszka ulubionych, sortowanie po najbliższym terminie. Mapa z prototypu była rysunkiem. Zamiast niej są linki do OpenStreetMap, gdy lokal ma współrzędne.
+Wyszukiwanie zdaniem, „wolne sob 14.11”, zadatek, płatność, potwierdzenie terminu, czat, serduszka ulubionych, sortowanie po najbliższym terminie. Mapa z prototypu była rysunkiem. Zamiast niej są linki do OpenStreetMap, gdy lokal ma współrzędne. Makieta konta ma karty zadatku i potwierdzonej rezerwacji — to dane przykładowe, nie ten etap. Nie ma też osobnych ekranów „Ulubione” i „Moje dane”. Wariant mobile konta nie jest w Figmie; wąski ekran składa kartę z istniejących klas.
 
 ## Pytania bez odpowiedzi
 
-Zostają pytania z specyfikacji: prowizja i kto przyjmuje pieniądze, zapytanie bez konta, terminy odpowiedzi i zadatku, koszt zwrotu, czy rezerwujemy salę czy cały lokal przy wielu salach, kto dostarcza zdjęcia na start, faktury. Odpowiedzi nie zostały zgadnięte w kodzie.
+Zostają pytania z specyfikacji: prowizja i kto przyjmuje pieniądze, terminy odpowiedzi i zadatku, koszt zwrotu, czy rezerwujemy salę czy cały lokal przy wielu salach, kto dostarcza zdjęcia na start, faktury. Odpowiedzi nie zostały zgadnięte w kodzie. Zapytanie bez konta jest możliwe, ale nie wraca na konto samo.

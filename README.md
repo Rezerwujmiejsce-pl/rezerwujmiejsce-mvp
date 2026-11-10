@@ -1,8 +1,8 @@
 # rezerwujmiejsce.pl — pierwszy wycinek
 
-Właściciel zakłada konto, opisuje lokal (sale, zdjęcia, udogodnienia, okazje, cenę) i wysyła go do sprawdzenia. Administrator publikuje. Gość bez konta wyszukuje tylko opublikowane lokale i otwiera stronę lokalu.
+Właściciel zakłada konto, opisuje lokal (sale, zdjęcia, udogodnienia, okazje, cenę) i wysyła go do sprawdzenia. Administrator publikuje. Gość bez konta wyszukuje tylko opublikowane lokale, otwiera stronę lokalu i może zapytać o termin. Zalogowany klient widzi na koncie tylko zapytania wysłane z tego konta.
 
-To nie jest jeszcze rezerwacja. Nie ma płatności, zadatku, SMS-ów, kalendarza wolnych terminów, opinii ani porównywania.
+To nie jest jeszcze rezerwacja. Nie ma płatności, zadatku, SMS-ów, kalendarza wolnych terminów, opinii ani porównywania. Zapis zapytania nie wysyła wiadomości.
 
 ## Dla Wojtka, bez linii poleceń
 
@@ -31,4 +31,4 @@ Rola administratora nie powstaje przy pierwszej rejestracji. Nadaje ją osobna k
 | [docs/vercel.md](docs/vercel.md) | Czego trzeba, zanim kiedyś wrzucimy to na Vercel. Jeszcze nie wrzucamy |
 | [docs/decyzje.md](docs/decyzje.md) | Tymczasowe ustalenia i pytania bez odpowiedzi |
 
-Projekt DEV w Supabase (Frankfurt, ref `uksiphxyrpanubfjixhg`) nie był ruszany. Nie było do niego kluczy.
+Na projekcie DEV są już dwie pierwsze migracje. Pliku zapytań `supabase/migrations/20261110084306_zapytania_o_termin.sql` tam nie wgrano. Jak go wdrożyć: [docs/zapytania.md](docs/zapytania.md).

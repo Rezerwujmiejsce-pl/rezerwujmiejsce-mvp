@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ProfileRow } from "../data/supabase/session";
 import { signOut } from "../app/konto/actions";
+import { shortAccountLabel } from "../domain/inquiry";
 import { MenuButton } from "./menu-button";
 import { ShareMenu } from "./share-menu";
 
@@ -27,7 +28,8 @@ export function Header({
             <li><Link href="/rejestracja">Dodaj swój lokal</Link></li>
             {profile ? (
               <>
-                <li><Link href="/panel">Twój lokal</Link></li>
+                <li><Link href="/konto">{shortAccountLabel(profile.imie_nazwisko, profile.email)}</Link></li>
+                {profile.rola !== "klient" ? <li><Link href="/panel">Twój lokal</Link></li> : null}
                 {profile.rola === "admin" ? <li><Link href="/admin">Weryfikacja</Link></li> : null}
                 <li>
                   <form action={signOut}>

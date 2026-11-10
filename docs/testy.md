@@ -16,7 +16,11 @@ Przy włączonym Dockerze i `supabase start`:
 npm run test:security
 ```
 
-To `supabase test db`. Plik: `supabase/tests/rls_security.test.sql`.
+To `supabase test db`. Pliki: `supabase/tests/rls_security.test.sql` i `supabase/tests/zapytania_rls.test.sql`.
+
+`zapytania_rls.test.sql` sprawdza, że gość nie czyta i nie wstawia wiersza, szkic i obca sala odpadają, pojemność i data są pilnowane, szacunek to cena za osobę razy liczba gości, a konto z tym samym e-mailem nie widzi zapytania gościa. Właściciel widzi tylko swój lokal i może odrzucić. Nie ustawia statusu „zaakceptowane”.
+
+Na tym komputerze nie ma `supabase start` (brak Dockera). Oba pliki poszły na lokalnym Postgres 16, po trzech migracjach, z dopisanym na czas testu schematem `auth` (`uid`, `role`, `users`) i tabelą `storage.objects`. To nie jest projekt DEV ani obraz Supabase. Wynik: 24 testy zapytań i 57 dotychczasowych testów ról, wszystkie zaliczone, transakcja wycofana.
 
 Scenariusze:
 

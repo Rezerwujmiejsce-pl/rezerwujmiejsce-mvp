@@ -50,6 +50,9 @@ export type PublicRoom = {
   jednostka: string;
   metraz: number | null;
   cena: string;
+  grosze: number | null;
+  jednostkaCeny: string;
+  cenaNaZapytanie: boolean;
 };
 
 export type PublicPhoto = {
@@ -212,6 +215,9 @@ export async function getPublishedVenue(miasto: string, slug: string): Promise<D
         cena: room.cena_na_zapytanie
           ? "cena na zapytanie"
           : priceLine(Number(room.kwota_grosze), String(room.jednostka_ceny), false).replace(/^od /, ""),
+        grosze: room.cena_na_zapytanie || room.kwota_grosze == null ? null : Number(room.kwota_grosze),
+        jednostkaCeny: String(room.jednostka_ceny),
+        cenaNaZapytanie: Boolean(room.cena_na_zapytanie),
       })),
       zdjecia: (payload.zdjecia ?? []).map((photo) => ({
         id: String(photo.id),

@@ -14,10 +14,20 @@ export async function signIn(formData: FormData) {
   if (!readPublicEnv().ok) fail("/logowanie", "Brak konfiguracji bazy. Uzupełnij .env.local.");
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = safeNextPath(String(formData.get("next") ?? "/panel"));
+  const requested = String(formData.get("next") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) fail("/logowanie", "Nie udało się zalogować. Sprawdź adres i hasło.");
+  let next = requested ? safeNextPath(requested) : "";
+  if (!requested) {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+      .from("profile")
+      .select("rola")
+      .eq("id", userData.user?.id ?? "")
+      .maybeSingle();
+    next = profile?.rola === "klient" ? "/konto" : "/panel";
+  }
   redirect(next);
 }
 

@@ -10,7 +10,7 @@ export default async function LoginPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const next = safeNextPath(params.next);
+  const next = params.next ? safeNextPath(params.next) : "";
   return (
     <Shell sharePath="/logowanie">
       <main className="wrap page-pad">

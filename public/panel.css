@@ -36,3 +36,15 @@ table.plain th,table.plain td{text-align:left;padding:10px 8px;border-bottom:1px
 }
 
 .classic,.classic span,.classic input,.classic select{color:#141414}
+.bk{border:1px solid var(--line);border-radius:16px;background:#fff}
+.bk .ph,.sum .ph{width:120px;height:88px;border-radius:8px;background:var(--soft)}
+.sum .ph{width:72px;height:72px}
+.tag-wait{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;background:var(--ink);color:#fff;font-size:11px;font-weight:700}
+.stepsbar li.later{color:var(--grey)}
+.stepsbar li.wait{color:var(--ink)}
+.stepsbar li.wait i{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.bk.muted{background:var(--soft)}
+.account-photo{width:100%;max-width:360px;height:180px;object-fit:cover;border-radius:12px}
+@media (max-width:760px){
+  .bk .ph{width:88px;height:72px}
+}
